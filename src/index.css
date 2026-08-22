@@ -1,0 +1,266 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Tajawal', 'Cairo', system-ui, sans-serif;
+  }
+}
+
+.font-cairo {
+  font-family: 'Cairo', sans-serif;
+}
+
+.font-tajawal {
+  font-family: 'Tajawal', sans-serif;
+}
+
+.font-amiri {
+  font-family: 'Amiri', serif;
+}
+
+/* ========================================================================= */
+/* PRINT STYLES & A4 FORMATTING */
+/* ========================================================================= */
+@page {
+  size: A4 portrait;
+  margin: 6mm 6mm 6mm 6mm;
+}
+
+@media print {
+  html, body {
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide screen-only UI elements */
+  .no-print,
+  #root > nav,
+  #root > header,
+  .screen-header,
+  .screen-navbar,
+  .floating-menu,
+  .modal-overlay,
+  .audio-player-bar,
+  .interactive-buttons,
+  button,
+  .no-print * {
+    display: none !important;
+  }
+
+  /* Show only print content container */
+  #print-document-container {
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  #print-document-container * {
+    visibility: visible !important;
+  }
+
+  #print-document-container header,
+  #print-document-container footer,
+  #print-document-container main {
+    display: block !important;
+  }
+
+  .print-page-container {
+    page-break-after: always !important;
+    break-after: page !important;
+    width: 100% !important;
+    min-height: 270mm !important;
+    padding: 6mm 6mm !important;
+    box-sizing: border-box !important;
+    background: white !important;
+    color: black !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    border: none !important;
+  }
+
+  /* Certificate Frame Print View */
+  #certificate-printable-frame {
+    display: block !important;
+    visibility: visible !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 12mm 15mm !important;
+    box-sizing: border-box !important;
+    background: white !important;
+    border: 5px double #b45309 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  #certificate-printable-frame * {
+    visibility: visible !important;
+  }
+
+  /* Ink-saver mode */
+  .ink-saver {
+    filter: grayscale(100%) contrast(120%) !important;
+  }
+  
+  .ink-saver * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Keep table headers with table */
+  thead {
+    display: table-header-group;
+  }
+
+  tr {
+    page-break-inside: avoid;
+  }
+}
+
+@media screen {
+  #print-document-container {
+    display: none;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: #f1ede7;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Arabic Dotted Tracing Style (نمط المقطع المنقط للتتبع) */
+.arabic-dotted-tracing {
+  font-family: 'Amiri', 'Traditional Arabic', serif;
+  color: #94a3b8 !important;
+  opacity: 0.75;
+  letter-spacing: 1px;
+  user-select: none;
+  font-weight: 700;
+  display: inline-block;
+  direction: rtl;
+}
+
+@media print {
+  .arabic-dotted-tracing {
+    color: #64748b !important;
+    opacity: 0.6 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+/* ========================================================================= */
+/* 4-LINE ARABIC HANDWRITING GRIDS (شبكة أسطر كراسة النسخ الأربعة) */
+/* ========================================================================= */
+.arabic-4line-container {
+  position: relative;
+  width: 100%;
+  height: 48px;
+  background: #ffffff;
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+}
+
+.arabic-4line-container.compact {
+  height: 38px;
+}
+
+.arabic-4line-container .grid-line {
+  width: 100%;
+  position: absolute;
+  left: 0;
+  right: 0;
+}
+
+/* Line 1: Top Ascender Line (خط الحروف الصاعدة: أ، ك، ل، ط) */
+.arabic-4line-container .line-ascender {
+  top: 15%;
+  border-top: 1px dashed #94a3b8;
+}
+
+/* Line 2: Mid Waist Line (خط وسط الحروف / رأس الحروف المستقرة) */
+.arabic-4line-container .line-waist {
+  top: 45%;
+  border-top: 1px dashed #cbd5e1;
+}
+
+/* Line 3: Main Base Line (خط الأساس الرئيسي المتصل) */
+.arabic-4line-container .line-base {
+  top: 72%;
+  border-top: 2px solid #059669;
+}
+
+/* Line 4: Bottom Descender Line (خط الحروف الهابطة: ر، ز، و، ي، ج، ق) */
+.arabic-4line-container .line-descender {
+  top: 92%;
+  border-top: 1px dashed #f87171;
+}
+
+.arabic-4line-container .grid-guide-indicator {
+  position: absolute;
+  right: 4px;
+  top: 65%;
+  font-size: 8px;
+  color: #059669;
+  font-weight: 900;
+  user-select: none;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* Booklet Mode Binding Margin (هوامش التجليد والتدبيس المتناوبة) */
+.booklet-mode-page {
+  box-sizing: border-box;
+}
+.booklet-mode-page.page-odd {
+  padding-right: 14mm !important;
+  padding-left: 8mm !important;
+}
+.booklet-mode-page.page-even {
+  padding-left: 14mm !important;
+  padding-right: 8mm !important;
+}
+
+/* Official Evaluation Stamp */
+.mastery-stamp-badge {
+  border: 2px dashed #064e3b;
+  border-radius: 12px;
+  padding: 6px 12px;
+  text-align: center;
+  background: #f0fdf4;
+  color: #064e3b;
+  font-weight: 800;
+  font-size: 11px;
+}
+
+
