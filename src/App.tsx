@@ -6,6 +6,9 @@ import { EvaluationDashboard } from './components/EvaluationDashboard';
 import { DictationLab } from './components/DictationLab';
 import { SpeedReadingTrainer } from './components/SpeedReadingTrainer';
 import { SukoonTestTool } from './components/SukoonTestTool';
+import { MinimalPairsLab } from './components/MinimalPairsLab';
+import { DiagnosticTrackingMatrix } from './components/DiagnosticTrackingMatrix';
+import { FullBookPrintView } from './components/FullBookPrintView';
 import { SearchModal } from './components/SearchModal';
 import { LogoUploadModal } from './components/LogoUploadModal';
 import { PrintCenterModal } from './components/PrintCenterModal';
@@ -16,7 +19,7 @@ import { BookPage, EvaluationSkill } from './types/book';
 import { SchoolBranding, loadSchoolBranding, saveSchoolBranding, DEFAULT_BRANDING } from './utils/schoolBranding';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'pages' | 'units' | 'dictation' | 'speed' | 'sukoon_test' | 'evaluation' | 'toc'>('pages');
+  const [activeTab, setActiveTab] = useState<'pages' | 'units' | 'dictation' | 'speed' | 'sukoon_test' | 'minimal_pairs' | 'diagnostic_matrix' | 'evaluation' | 'toc' | 'print_book'>('pages');
   const [currentPageNum, setCurrentPageNum] = useState<number>(1);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isLogoModalOpen, setIsLogoModalOpen] = useState(false);
@@ -157,7 +160,25 @@ export default function App() {
           <SukoonTestTool />
         )}
 
-        {/* VIEW 6: EVALUATION DASHBOARD */}
+        {/* VIEW 6: MINIMAL PAIRS LAB */}
+        {activeTab === 'minimal_pairs' && (
+          <MinimalPairsLab 
+            branding={branding}
+            onNavigateToLesson={handleSelectPage}
+          />
+        )}
+
+        {/* VIEW 7: DIAGNOSTIC TRACKING MATRIX */}
+        {activeTab === 'diagnostic_matrix' && (
+          <DiagnosticTrackingMatrix
+            studentName={studentName}
+            studentGrade={studentGrade}
+            studentClass={studentClass}
+            branding={branding}
+          />
+        )}
+
+        {/* VIEW 8: EVALUATION DASHBOARD */}
         {activeTab === 'evaluation' && (
           <EvaluationDashboard
             skills={skills}
@@ -169,6 +190,20 @@ export default function App() {
             studentClass={studentClass}
             branding={branding}
             onNavigateToPage={handleSelectPage}
+          />
+        )}
+
+        {/* VIEW 9: FULL BOOK PRINT CURRICULUM (A4) */}
+        {activeTab === 'print_book' && (
+          <FullBookPrintView
+            branding={branding}
+            onUpdateBranding={handleUpdateBranding}
+            studentName={studentName}
+            studentGrade={studentGrade}
+            studentClass={studentClass}
+            skills={skills}
+            onOpenLogoModal={() => setIsLogoModalOpen(true)}
+            onNavigateToInteractivePage={handleSelectPage}
           />
         )}
       </main>

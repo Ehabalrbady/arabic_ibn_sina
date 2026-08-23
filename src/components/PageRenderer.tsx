@@ -21,6 +21,7 @@ import { InteractiveTracingBoard } from './InteractiveTracingBoard';
 import { SyllableCutterModal } from './SyllableCutterModal';
 import { IbnSinaLogo } from './IbnSinaLogo';
 import { SchoolBranding, DEFAULT_BRANDING } from '../utils/schoolBranding';
+import { SyllableHighlighter, SyllableLegendGuide } from '../utils/syllableHighlighter';
 
 interface PageRendererProps {
   page: BookPage;
@@ -49,6 +50,10 @@ export const PageRenderer: React.FC<PageRendererProps> = ({
   const [showTracingPad, setShowTracingPad] = useState(false);
   const [tracingGuideWord, setTracingGuideWord] = useState<string>('');
   const [activeAnalysisModal, setActiveAnalysisModal] = useState<{ word: string; syllables: string[]; explanation?: string } | null>(null);
+
+  // EGR Visual Syllable Highlighting state
+  const [highlightSyllables, setHighlightSyllables] = useState(true);
+  const [showSyllableLegend, setShowSyllableLegend] = useState(false);
 
   // Picture blanks state for page 117
   const [pictureAnswers, setPictureAnswers] = useState<Record<number, string>>({});
@@ -180,6 +185,44 @@ export const PageRenderer: React.FC<PageRendererProps> = ({
             )}
           </div>
         )}
+
+        {/* EGR Phonics Guidance Alert: Emphasize Sound over Letter Names */}
+        <div className="bg-linear-to-r from-emerald-50 via-teal-50 to-amber-50 border-r-4 border-emerald-600 rounded-2xl p-3 text-xs space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="font-black text-emerald-950 flex items-center gap-1.5">
+              <span>🔊 توجيه نهج القراءة المبكر (EGR) للمعلم وولي الأمر:</span>
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setHighlightSyllables(!highlightSyllables)}
+                className={`px-2.5 py-1 rounded-xl text-[11px] font-black transition flex items-center gap-1 cursor-pointer border ${
+                  highlightSyllables 
+                    ? 'bg-emerald-700 text-white border-emerald-800 shadow-2xs' 
+                    : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                }`}
+                title="تفعيل تمييز المقاطع الصوتية بالألوان والأقواس السفلية ⏝"
+              >
+                <span>🌈 {highlightSyllables ? 'المقاطع الصوتية مفعّلة' : 'تفعيل المقاطع الصوتية'}</span>
+              </button>
+
+              <button
+                onClick={() => setShowSyllableLegend(!showSyllableLegend)}
+                className="px-2 py-1 rounded-xl text-[10px] font-bold bg-white text-slate-700 border border-slate-200 hover:bg-amber-50"
+              >
+                {showSyllableLegend ? 'إخفاء الدليل' : 'دليل الرموز ℹ️'}
+              </button>
+            </div>
+          </div>
+          <p className="text-slate-700 leading-relaxed text-[11px] font-medium">
+            💡 <strong>التأكيد على الصوت لا الحرف:</strong> احرص دائماً على نطق الأصوات بحركاتها (<strong>بَ، بِ، بُ</strong>) أو مقطعها الساكن دفعة واحدة (<strong>أَبْـ</strong>)، وتجنّب تماماً نطق أسماء الحروف المجردة (باء، ميم، سين) لتسريع الانتقال من التهجئة البطيئة إلى الطلاقة القرائية.
+          </p>
+
+          {showSyllableLegend && (
+            <div className="pt-2">
+              <SyllableLegendGuide compact={true} />
+            </div>
+          )}
+        </div>
 
         {/* Rule Notice if any */}
         {page.ruleNotice && (
@@ -380,7 +423,11 @@ export const PageRenderer: React.FC<PageRendererProps> = ({
                     className="text-xl sm:text-2xl font-black text-slate-900 tracking-wide cursor-pointer hover:text-emerald-800 hover:scale-105 transition"
                     title="اضغط للنطق"
                   >
-                    {word}
+                    {highlightSyllables ? (
+                      <SyllableHighlighter text={word} showArcs={true} colorCoded={true} />
+                    ) : (
+                      word
+                    )}
                   </span>
 
                   <div className="flex items-center gap-1.5 w-full pt-1 border-t border-slate-100">
@@ -424,7 +471,11 @@ export const PageRenderer: React.FC<PageRendererProps> = ({
                     </span>
                     <span className="text-slate-400 font-black">➜</span>
                     <span className="text-2xl font-black text-emerald-950">
-                      {ex.combined}
+                      {highlightSyllables ? (
+                        <SyllableHighlighter text={ex.combined} showArcs={true} />
+                      ) : (
+                        ex.combined
+                      )}
                     </span>
                   </div>
 
@@ -464,7 +515,11 @@ export const PageRenderer: React.FC<PageRendererProps> = ({
                 >
                   <div className="space-y-1">
                     <span className="text-xl font-black text-slate-900 block">
-                      {item.word}
+                      {highlightSyllables ? (
+                        <SyllableHighlighter text={item.word} showArcs={true} />
+                      ) : (
+                        item.word
+                      )}
                     </span>
                     <div className="flex items-center gap-1">
                       {item.syllables.map((syl, sIdx) => (
@@ -510,7 +565,11 @@ export const PageRenderer: React.FC<PageRendererProps> = ({
                   className="p-4 rounded-2xl bg-[#FCFAF7] border-2 border-amber-200/80 flex items-center justify-between gap-3"
                 >
                   <span className="text-base sm:text-lg font-bold text-slate-900 leading-relaxed">
-                    {sentence}
+                    {highlightSyllables ? (
+                      <SyllableHighlighter text={sentence} showArcs={true} />
+                    ) : (
+                      sentence
+                    )}
                   </span>
                   <button
                     onClick={() => playArabicAudio(sentence)}

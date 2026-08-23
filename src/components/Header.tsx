@@ -14,7 +14,8 @@ import {
   ChevronLeft,
   Image as ImageIcon,
   Upload,
-  Sliders
+  Sliders,
+  Headphones
 } from 'lucide-react';
 import { ALL_BOOK_PAGES } from '../data/bookData';
 import { BookPage } from '../types/book';
@@ -22,8 +23,8 @@ import { IbnSinaLogo } from './IbnSinaLogo';
 import { SchoolBranding } from '../utils/schoolBranding';
 
 interface HeaderProps {
-  activeTab: 'pages' | 'units' | 'dictation' | 'speed' | 'sukoon_test' | 'evaluation' | 'toc';
-  setActiveTab: (tab: 'pages' | 'units' | 'dictation' | 'speed' | 'sukoon_test' | 'evaluation' | 'toc') => void;
+  activeTab: 'pages' | 'units' | 'dictation' | 'speed' | 'sukoon_test' | 'minimal_pairs' | 'diagnostic_matrix' | 'evaluation' | 'toc' | 'print_book';
+  setActiveTab: (tab: 'pages' | 'units' | 'dictation' | 'speed' | 'sukoon_test' | 'minimal_pairs' | 'diagnostic_matrix' | 'evaluation' | 'toc' | 'print_book') => void;
   currentPage: number;
   setCurrentPage: (page: number) => void;
   onOpenSearch: () => void;
@@ -269,6 +270,18 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
 
           <button
+            onClick={() => setActiveTab('minimal_pairs')}
+            className={`px-3 py-2 rounded-xl font-bold whitespace-nowrap transition flex items-center gap-1.5 ${
+              activeTab === 'minimal_pairs'
+                ? 'bg-emerald-800 text-white shadow-sm'
+                : 'text-slate-700 hover:bg-amber-50'
+            }`}
+          >
+            <Headphones className="w-4 h-4 text-emerald-600" />
+            <span>🎧 مختبر التمييز السمعي والمدود</span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('sukoon_test')}
             className={`px-3 py-2 rounded-xl font-bold whitespace-nowrap transition flex items-center gap-1.5 ${
               activeTab === 'sukoon_test'
@@ -281,6 +294,18 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
 
           <button
+            onClick={() => setActiveTab('diagnostic_matrix')}
+            className={`px-3 py-2 rounded-xl font-bold whitespace-nowrap transition flex items-center gap-1.5 ${
+              activeTab === 'diagnostic_matrix'
+                ? 'bg-emerald-800 text-white shadow-sm'
+                : 'text-slate-700 hover:bg-amber-50'
+            }`}
+          >
+            <Sliders className="w-4 h-4 text-teal-600" />
+            <span>📈 بطاقة الرصد الأسبوعي (EGR)</span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('evaluation')}
             className={`px-3 py-2 rounded-xl font-bold whitespace-nowrap transition flex items-center gap-1.5 ${
               activeTab === 'evaluation'
@@ -290,6 +315,18 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Award className="w-4 h-4" />
             <span>📊 سجل القياس (المحاولات الـ 4)</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('print_book')}
+            className={`px-3.5 py-2 rounded-xl font-black whitespace-nowrap transition flex items-center gap-1.5 shadow-2xs ${
+              activeTab === 'print_book'
+                ? 'bg-emerald-950 text-amber-300 ring-2 ring-amber-400'
+                : 'bg-amber-200/80 hover:bg-amber-300 text-amber-950 border border-amber-400'
+            }`}
+          >
+            <Printer className="w-4 h-4 text-emerald-900" />
+            <span>🖨️ منهج الكتاب الكامل للطباعة (A4)</span>
           </button>
         </nav>
       </div>

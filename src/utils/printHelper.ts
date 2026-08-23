@@ -359,7 +359,7 @@ export function generatePrintDocumentHtml({
     if (isEvaluation) {
       return `
         <div class="print-page ${branding.inkSaverMode ? 'ink-saver' : ''} ${pageClass}">
-          ${renderHeader(page, branding, sName, sGrade, sClass)}
+          ${renderHeader(page, branding)}
           
           <main class="page-content">
             <div class="eval-title-bar">
@@ -411,7 +411,7 @@ export function generatePrintDocumentHtml({
     // Standard Lesson / Worksheet Page
     return `
       <div class="print-page ${branding.inkSaverMode ? 'ink-saver' : ''} ${pageClass}">
-        ${renderHeader(page, branding, sName, sGrade, sClass)}
+        ${renderHeader(page, branding)}
 
         <main class="page-content">
           ${(page.goal || page.procedure) ? `
@@ -467,20 +467,28 @@ export function generatePrintDocumentHtml({
           ` : ''}
 
           ${page.pageType === 'written_tracing' ? `
-            <div class="section-title">تدريب كتابي: اقرأ النموذج ➜ تتبع المقطع المنقط بقلم الرصاص ➜ اكتب المقطع بمفردك على سطر الأساس:</div>
-            <div class="tracing-grid-3step">
+            <div class="section-title">تدريب كتابي رأسي: اقرأ النموذج ➜ تتبع المقطع المنقط ➜ اكتب المقطع في المحاولات التالية على سطر الأساس:</div>
+            <div class="v4-tracing-grid">
               ${(page.content?.gridItems || []).map(item => `
-                <div class="tracing-card-3step">
-                  <div class="tracing-step-col model-col">
-                    <span class="step-lbl">النموذج</span>
-                    <span class="step-text font-amiri">${item}</span>
+                <div class="v4-tracing-card">
+                  <!-- 1. Model Item -->
+                  <div class="v4-tier v4-model-tier">
+                    <span class="v4-badge">النموذج</span>
+                    <span class="v4-word-text font-amiri">${item}</span>
                   </div>
-                  <div class="tracing-step-col dotted-col">
-                    <span class="step-lbl">تتبع منقط</span>
-                    <span class="step-text font-amiri arabic-dotted-tracing">${item}</span>
+                  <!-- 2. Dotted Tracing (Attempt 1) -->
+                  <div class="v4-tier v4-dotted-tier">
+                    <span class="v4-badge">١. تتبع منقط ✏️</span>
+                    <span class="v4-dotted-text font-amiri arabic-dotted-tracing">${item}</span>
                   </div>
-                  <div class="tracing-step-col empty-col">
-                    <span class="step-lbl">اكتب هنا</span>
+                  <!-- 3. Attempt 2 (Writing) -->
+                  <div class="v4-tier v4-write-tier">
+                    <span class="v4-badge">٢. اكتب على السطر</span>
+                    ${renderHandwritingSlot(branding, 'compact')}
+                  </div>
+                  <!-- 4. Attempt 3/4 (Mastery Writing) -->
+                  <div class="v4-tier v4-write-tier">
+                    <span class="v4-badge">٣/٤. كرر للإتقان ⭐</span>
                     ${renderHandwritingSlot(branding, 'compact')}
                   </div>
                 </div>
@@ -518,12 +526,26 @@ export function generatePrintDocumentHtml({
           ` : ''}
 
           ${page.pageType === 'letter_vowels' ? `
-            <div class="section-title">اقرأ الحروف بالحركات الثلاث (فتحة - كسرة - ضمة) ثم اكتب الحرف بخط جميل:</div>
-            <div class="letter-vowels-grid">
+            <div class="section-title">اقرأ الحروف بالحركات الثلاث (فتحة - كسرة - ضمة) ثم اكتب كل حرف بخط جميل:</div>
+            <div class="letter-vowels-v4-grid">
               ${(page.content?.gridItems || []).map(group => `
-                <div class="letter-vowel-card">
-                  <div class="letter-vowel-char">${group}</div>
-                  ${renderHandwritingSlot(branding, 'compact')}
+                <div class="letter-vowel-v4-card">
+                  <div class="v4-tier v4-model-tier">
+                    <span class="v4-badge">النموذج</span>
+                    <span class="v4-char-text font-amiri">${group}</span>
+                  </div>
+                  <div class="v4-tier v4-dotted-tier">
+                    <span class="v4-badge">١. تتبع</span>
+                    <span class="v4-char-dotted font-amiri arabic-dotted-tracing">${group}</span>
+                  </div>
+                  <div class="v4-tier v4-write-tier">
+                    <span class="v4-badge">٢. اكتب</span>
+                    ${renderHandwritingSlot(branding, 'compact')}
+                  </div>
+                  <div class="v4-tier v4-write-tier">
+                    <span class="v4-badge">٣/٤. كرر</span>
+                    ${renderHandwritingSlot(branding, 'compact')}
+                  </div>
                 </div>
               `).join('')}
             </div>
@@ -538,9 +560,23 @@ export function generatePrintDocumentHtml({
               page.pageType === 'two_letters_reading' ? 'grid-medium' : 'grid-words'
             }">
               ${(page.content?.gridItems || []).map(word => `
-                <div class="word-card">
-                  <span class="word-text font-amiri">${word}</span>
-                  ${renderHandwritingSlot(branding, 'compact')}
+                <div class="word-card-v4">
+                  <div class="v4-tier v4-model-tier">
+                    <span class="v4-badge">النموذج</span>
+                    <span class="word-text font-amiri">${word}</span>
+                  </div>
+                  <div class="v4-tier v4-dotted-tier">
+                    <span class="v4-badge">١. تتبع</span>
+                    <span class="v4-dotted-text font-amiri arabic-dotted-tracing">${word}</span>
+                  </div>
+                  <div class="v4-tier v4-write-tier">
+                    <span class="v4-badge">٢. اكتب</span>
+                    ${renderHandwritingSlot(branding, 'compact')}
+                  </div>
+                  <div class="v4-tier v4-write-tier">
+                    <span class="v4-badge">٣/٤. كرر</span>
+                    ${renderHandwritingSlot(branding, 'compact')}
+                  </div>
                 </div>
               `).join('')}
             </div>
@@ -556,29 +592,51 @@ export function generatePrintDocumentHtml({
             page.content?.gridItems ? `
             <div class="words-reading-grid grid-words">
               ${page.content.gridItems.map(word => `
-                <div class="word-card">
-                  <span class="word-text font-amiri">${word}</span>
-                  ${renderHandwritingSlot(branding, 'compact')}
+                <div class="word-card-v4">
+                  <div class="v4-tier v4-model-tier">
+                    <span class="v4-badge">النموذج</span>
+                    <span class="word-text font-amiri">${word}</span>
+                  </div>
+                  <div class="v4-tier v4-dotted-tier">
+                    <span class="v4-badge">١. تتبع</span>
+                    <span class="v4-dotted-text font-amiri arabic-dotted-tracing">${word}</span>
+                  </div>
+                  <div class="v4-tier v4-write-tier">
+                    <span class="v4-badge">٢. اكتب</span>
+                    ${renderHandwritingSlot(branding, 'compact')}
+                  </div>
+                  <div class="v4-tier v4-write-tier">
+                    <span class="v4-badge">٣/٤. كرر</span>
+                    ${renderHandwritingSlot(branding, 'compact')}
+                  </div>
                 </div>
               `).join('')}
             </div>
           ` : ''}
 
           ${page.pageType === 'connect_and_read' ? `
-            <div class="section-title">صل الحروف المنفصلة ➜ تتبع الكلمة المنقطة بقلم الرصاص ➜ اكتب الكلمة كاملة:</div>
-            <div class="connect-exercises-grid">
+            <div class="section-title">صل الحروف المنفصلة ➜ تتبع الكلمة المنقطة ➜ اكتب الكلمة في المحاولات التالية:</div>
+            <div class="v4-connect-grid">
               ${(page.content?.connectExercises || []).map(ex => `
-                <div class="connect-card-3step">
-                  <div class="connect-step-col sep-col">
-                    <span class="step-lbl">المقطع</span>
-                    <span class="sep-pill font-amiri">${ex.separated}</span>
+                <div class="v4-connect-card">
+                  <!-- 1. Separated Letters Model -->
+                  <div class="v4-tier v4-model-tier">
+                    <span class="v4-badge">المقاطع منفصلة (النموذج)</span>
+                    <span class="v4-sep-pill font-amiri">${ex.separated}</span>
                   </div>
-                  <div class="connect-step-col dotted-col">
-                    <span class="step-lbl">تتبع منقط</span>
-                    <span class="comb-pill font-amiri arabic-dotted-tracing">${ex.combined}</span>
+                  <!-- 2. Dotted Combined Word -->
+                  <div class="v4-tier v4-dotted-tier">
+                    <span class="v4-badge">١. تتبع الكلمة متصلة ✏️</span>
+                    <span class="v4-dotted-text font-amiri arabic-dotted-tracing">${ex.combined}</span>
                   </div>
-                  <div class="connect-step-col empty-col">
-                    <span class="step-lbl">اكتب هنا</span>
+                  <!-- 3. Attempt 2 -->
+                  <div class="v4-tier v4-write-tier">
+                    <span class="v4-badge">٢. اكتب الكلمة متصلة</span>
+                    ${renderHandwritingSlot(branding, 'compact')}
+                  </div>
+                  <!-- 4. Attempt 3/4 -->
+                  <div class="v4-tier v4-write-tier">
+                    <span class="v4-badge">٣/٤. كرر للإتقان ⭐</span>
                     ${renderHandwritingSlot(branding, 'compact')}
                   </div>
                 </div>
@@ -613,12 +671,30 @@ export function generatePrintDocumentHtml({
           ` : ''}
 
           ${page.pageType === 'sentences_reading' ? `
-            <div class="section-title">اقرأ الجمل التالية بطلاقة ثم اكتبها بخط جميل على السطر:</div>
-            <div class="sentences-list">
+            <div class="section-title">اقرأ الجمل التالية بطلاقة ➜ تتبع المنقط ➜ اكتب الجملة بخط النسخ الجميل:</div>
+            <div class="sentences-v4-list">
               ${(page.content?.sentences || []).map(sent => `
-                <div class="sentence-card">
-                  <div class="sentence-text font-amiri">${sent}</div>
-                  ${renderHandwritingSlot(branding)}
+                <div class="sentence-v4-card">
+                  <!-- 1. Model Sentence -->
+                  <div class="sent-v4-tier sent-v4-model">
+                    <span class="sent-v4-badge">النموذج:</span>
+                    <span class="sent-v4-text font-amiri">${sent}</span>
+                  </div>
+                  <!-- 2. Dotted Sentence -->
+                  <div class="sent-v4-tier sent-v4-dotted">
+                    <span class="sent-v4-badge">١. تتبع:</span>
+                    <span class="sent-v4-dotted-text font-amiri arabic-dotted-tracing">${sent}</span>
+                  </div>
+                  <!-- 3. Write Sentence Attempt 1 -->
+                  <div class="sent-v4-tier sent-v4-write">
+                    <span class="sent-v4-badge">٢. اكتب:</span>
+                    <div class="sent-v4-slot">${renderHandwritingSlot(branding)}</div>
+                  </div>
+                  <!-- 4. Write Sentence Attempt 2 (Mastery) -->
+                  <div class="sent-v4-tier sent-v4-write">
+                    <span class="sent-v4-badge">٣/٤. كرر:</span>
+                    <div class="sent-v4-slot">${renderHandwritingSlot(branding)}</div>
+                  </div>
                 </div>
               `).join('')}
             </div>
@@ -1312,8 +1388,8 @@ export function generatePrintDocumentHtml({
         /* Arabic Dotted Tracing Style (نمط التتبع المنقط) */
         .arabic-dotted-tracing {
           font-family: 'Amiri', 'Traditional Arabic', serif;
-          color: #64748b !important;
-          opacity: 0.65 !important;
+          color: #475569 !important;
+          opacity: 0.75 !important;
           letter-spacing: 1.5px;
           user-select: none;
           font-weight: 700;
@@ -1321,31 +1397,201 @@ export function generatePrintDocumentHtml({
           direction: rtl;
         }
 
-        /* 3-Step Tracing Grid (نموذج ➜ تتبع منقط ➜ كتابة حرة) */
-        .tracing-grid-3step {
+        /* ========================================================================= */
+        /* VERTICAL 4-ATTEMPT HANDWRITING & TRACING STYLES (التنسيق الرأسي رباعي المستويات) */
+        /* ========================================================================= */
+        .v4-tracing-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 8px;
+        }
+        @media (max-width: 768px) {
+          .v4-tracing-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
+        .v4-tracing-card, .v4-connect-card, .word-card-v4, .letter-vowel-v4-card {
+          border: 2px solid #0f172a;
+          border-radius: 10px;
+          padding: 6px;
+          background: #ffffff;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+          page-break-inside: avoid;
+        }
+        .v4-tier {
+          border-radius: 6px;
+          padding: 4px 6px;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          position: relative;
+        }
+        .v4-model-tier {
+          background: #f8fafc;
+          border: 1px solid #94a3b8;
+          text-align: center;
+          min-height: 52px;
+        }
+        .v4-dotted-tier {
+          background: #fafaf9;
+          border: 1.5px dashed #64748b;
+          text-align: center;
+          min-height: 52px;
+        }
+        .v4-write-tier {
+          background: #ffffff;
+          border: 1.5px solid #0f172a;
+          min-height: 48px;
+          padding: 3px 5px;
+        }
+        .v4-badge {
+          font-size: 10px;
+          font-weight: 800;
+          color: #475569;
+          display: block;
+          margin-bottom: 1px;
+          text-align: right;
+        }
+        .v4-word-text {
+          font-size: 32px;
+          font-weight: 900;
+          color: #020617;
+          line-height: 1.25;
+          text-align: center;
+          display: block;
+        }
+        .v4-dotted-text {
+          font-size: 32px;
+          font-weight: 900;
+          line-height: 1.25;
+          text-align: center;
+          display: block;
+        }
+        .v4-char-text {
+          font-size: 28px;
+          font-weight: 900;
+          color: #020617;
+          text-align: center;
+          line-height: 1.25;
+        }
+        .v4-char-dotted {
+          font-size: 28px;
+          font-weight: 900;
+          text-align: center;
+          line-height: 1.25;
+        }
+        .v4-sep-pill {
+          font-size: 22px;
+          font-weight: 900;
+          color: #064e3b;
+          text-align: center;
+          background: #ecfdf5;
+          border: 1.5px solid #a7f3d0;
+          border-radius: 6px;
+          padding: 3px 8px;
+          display: inline-block;
+          margin: 0 auto;
+        }
+
+        /* 4-Attempt Connect Grid */
+        .v4-connect-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 8px;
         }
+
+        /* 4-Attempt Letter Vowels Grid */
+        .letter-vowels-v4-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 6px;
+        }
+
+        /* 4-Attempt Sentences List */
+        .sentences-v4-list {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+        .sentence-v4-card {
+          border: 2px solid #0f172a;
+          border-radius: 10px;
+          padding: 8px 12px;
+          background: #ffffff;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          page-break-inside: avoid;
+        }
+        .sent-v4-tier {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 4px 8px;
+          border-radius: 6px;
+        }
+        .sent-v4-model {
+          background: #f8fafc;
+          border: 1px solid #94a3b8;
+        }
+        .sent-v4-dotted {
+          background: #fafaf9;
+          border: 1.5px dashed #64748b;
+        }
+        .sent-v4-write {
+          background: #ffffff;
+          border: 1.5px solid #0f172a;
+        }
+        .sent-v4-badge {
+          font-size: 11.5px;
+          font-weight: 900;
+          color: #334155;
+          min-width: 65px;
+        }
+        .sent-v4-text {
+          font-size: 26px;
+          font-weight: 900;
+          color: #020617;
+          flex: 1;
+        }
+        .sent-v4-dotted-text {
+          font-size: 26px;
+          font-weight: 900;
+          flex: 1;
+        }
+        .sent-v4-slot {
+          flex: 1;
+        }
+
+        /* 3-Step Tracing Grid (Legacy Fallback) */
+        .tracing-grid-3step {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+        }
         .tracing-card-3step {
           border: 2px solid #0f172a;
-          border-radius: 8px;
-          padding: 6px;
+          border-radius: 10px;
+          padding: 8px;
           background: white;
           display: grid;
-          grid-template-columns: 1fr 1fr 1.1fr;
-          gap: 6px;
+          grid-template-columns: 1fr 1fr 1.2fr;
+          gap: 8px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.03);
         }
         .tracing-step-col {
           border: 1px solid #cbd5e1;
-          border-radius: 6px;
-          padding: 4px;
+          border-radius: 8px;
+          padding: 6px 4px;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: space-between;
           text-align: center;
-          min-height: 58px;
+          min-height: 68px;
         }
         .tracing-step-col.model-col {
           background: #f8fafc;
@@ -1360,35 +1606,41 @@ export function generatePrintDocumentHtml({
           border: 1.5px solid #0f172a;
         }
         .step-lbl {
-          font-size: 8px;
+          font-size: 10px;
           font-weight: 800;
-          color: #64748b;
+          color: #475569;
           display: block;
           margin-bottom: 2px;
         }
         .step-text {
-          font-size: 20px;
+          font-size: 30px;
           font-weight: 900;
           color: #020617;
-          line-height: 1.2;
+          line-height: 1.25;
         }
         .tracing-step-col .handwriting-dotted-line {
-          width: 90%;
-          height: 14px;
+          width: 95%;
+          height: 16px;
           border-bottom: 2px dotted #0f172a;
           margin-top: auto;
         }
 
         /* 3-Step Connect Grid */
+        .connect-exercises-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+        }
         .connect-card-3step {
           border: 2px solid #0f172a;
-          border-radius: 8px;
-          padding: 6px 8px;
+          border-radius: 10px;
+          padding: 8px 10px;
           background: white;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 6px;
+          gap: 8px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.03);
         }
         .connect-step-col {
           display: flex;
@@ -1399,53 +1651,45 @@ export function generatePrintDocumentHtml({
         }
         .connect-step-col.sep-col .sep-pill {
           background: #f1f5f9;
-          border: 1px solid #94a3b8;
-          padding: 2px 8px;
-          border-radius: 6px;
-          font-size: 13px;
+          border: 1.5px solid #94a3b8;
+          padding: 4px 10px;
+          border-radius: 8px;
+          font-size: 22px;
           font-weight: 900;
         }
         .connect-step-col.dotted-col {
           border: 1.5px dashed #94a3b8;
-          padding: 2px 8px;
-          border-radius: 6px;
+          padding: 4px 10px;
+          border-radius: 8px;
           background: #fafaf9;
         }
         .connect-step-col.dotted-col .comb-pill {
-          font-size: 18px;
+          font-size: 30px;
           font-weight: 900;
         }
         .connect-step-col.empty-col {
           border: 1.5px solid #0f172a;
-          padding: 2px 8px;
-          border-radius: 6px;
-          min-width: 60px;
-        }
-        .connect-step-col.empty-col .handwriting-dotted-line {
-          width: 50px;
-          height: 14px;
-          border-bottom: 2px dotted #0f172a;
+          padding: 4px 10px;
+          border-radius: 8px;
+          min-width: 80px;
+          flex: 1;
         }
 
         /* Analysis Slots Row */
         .analysis-slots-row {
           display: flex;
-          gap: 4px;
+          gap: 6px;
         }
         .syl-slot-box {
-          width: 32px;
-          height: 22px;
+          min-width: 52px;
+          height: 36px;
           border: 1.5px solid #0f172a;
-          border-radius: 4px;
+          border-radius: 6px;
           background: white;
           display: flex;
-          align-items: flex-end;
+          align-items: center;
           justify-content: center;
-          padding-bottom: 2px;
-        }
-        .slot-line {
-          width: 20px;
-          border-bottom: 1.5px dotted #64748b;
+          padding: 2px 4px;
         }
 
         /* Tracing Grid (Standard) */
@@ -1457,15 +1701,15 @@ export function generatePrintDocumentHtml({
         .tracing-card {
           border: 2px solid #0f172a;
           border-radius: 10px;
-          padding: 10px 8px;
+          padding: 10px;
           background: white;
           display: flex;
           flex-direction: column;
           justify-content: space-between;
-          min-height: 85px;
+          min-height: 95px;
         }
         .tracing-word {
-          font-size: 24px;
+          font-size: 32px;
           font-weight: 900;
           color: #020617;
           text-align: center;
@@ -1476,7 +1720,7 @@ export function generatePrintDocumentHtml({
           margin-top: 6px;
         }
         .tracing-label {
-          font-size: 9px;
+          font-size: 10px;
           font-weight: 800;
           color: #64748b;
           display: block;
@@ -1485,100 +1729,98 @@ export function generatePrintDocumentHtml({
 
         /* Dictation Board */
         .dictation-intro-box {
-          background: #f1f5f9;
-          border: 1.5px solid #64748b;
-          border-radius: 8px;
-          padding: 8px;
+          background: #f8fafc;
+          border: 1.5px solid #064e3b;
+          border-radius: 10px;
+          padding: 10px 14px;
           text-align: center;
         }
         .dictation-intro-box h3 {
-          font-size: 13px;
+          font-size: 15px;
           font-weight: 900;
-          color: #0f172a;
+          color: #064e3b;
         }
         .dictation-intro-box p {
-          font-size: 11px;
+          font-size: 12px;
           font-weight: 700;
-          color: #475569;
+          color: #334155;
         }
         .dictation-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 8px;
+          gap: 10px;
         }
         .dictation-slot {
           border: 2px solid #0f172a;
-          border-radius: 8px;
-          padding: 6px 10px;
+          border-radius: 10px;
+          padding: 8px 12px;
           background: white;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 6px;
+          gap: 8px;
         }
         .dictation-num-label {
           display: flex;
           align-items: center;
-          gap: 4px;
+          gap: 6px;
         }
         .dictation-num {
-          width: 20px;
-          height: 20px;
-          background: #0f172a;
+          width: 24px;
+          height: 24px;
+          background: #064e3b;
           color: white;
           border-radius: 50%;
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          font-size: 10px;
+          font-size: 12px;
           font-weight: 900;
         }
         .dictation-lbl {
-          font-size: 11px;
-          font-weight: 700;
-          color: #64748b;
+          font-size: 12px;
+          font-weight: 800;
+          color: #334155;
         }
         .dictation-line {
           flex: 1;
-          height: 16px;
-          border-bottom: 2px dotted #334155;
-          margin: 0 4px;
+          margin: 0 6px;
         }
         .dictation-check {
           border: 1px solid #cbd5e1;
-          border-radius: 4px;
-          padding: 2px 4px;
-          font-size: 9px;
-          font-weight: 700;
+          border-radius: 6px;
+          padding: 3px 6px;
+          font-size: 10px;
+          font-weight: 800;
           color: #64748b;
           white-space: nowrap;
         }
         .dictation-bank {
           background: #f8fafc;
-          border: 1.5px dashed #64748b;
-          border-radius: 8px;
-          padding: 8px 12px;
+          border: 1.5px dashed #064e3b;
+          border-radius: 10px;
+          padding: 10px 14px;
         }
         .dictation-bank strong {
-          font-size: 11px;
+          font-size: 12px;
           font-weight: 900;
-          color: #0f172a;
+          color: #064e3b;
           display: block;
-          margin-bottom: 4px;
+          margin-bottom: 6px;
         }
         .dictation-words-list {
           display: flex;
           flex-wrap: wrap;
-          gap: 6px;
+          gap: 8px;
         }
         .dict-word-tag {
           background: white;
-          border: 1px solid #cbd5e1;
-          border-radius: 6px;
-          padding: 2px 8px;
-          font-size: 13px;
+          border: 1.5px solid #059669;
+          border-radius: 8px;
+          padding: 4px 12px;
+          font-size: 16px;
           font-weight: 900;
-          color: #0f172a;
+          color: #064e3b;
         }
 
         /* Rule Boxes */
@@ -2171,7 +2413,7 @@ export function generatePrintDocumentHtml({
         /* PRINT MEDIA RULES */
         @page {
           size: A4 portrait;
-          margin: 8mm 8mm 8mm 8mm;
+          margin: 6mm 6mm 6mm 6mm;
         }
 
         @media print {
@@ -2190,9 +2432,9 @@ export function generatePrintDocumentHtml({
             box-shadow: none !important;
             border-radius: 0 !important;
             width: 100% !important;
-            min-height: 275mm !important;
+            min-height: 285mm !important;
             margin: 0 !important;
-            padding: 10mm 10mm !important;
+            padding: 6mm 8mm !important;
           }
         }
       </style>
@@ -2215,7 +2457,6 @@ export function generatePrintDocumentHtml({
       <script>
         // Auto trigger print after fonts load if desired
         window.addEventListener('DOMContentLoaded', () => {
-          // Focus window
           window.focus();
         });
       </script>
@@ -2224,21 +2465,16 @@ export function generatePrintDocumentHtml({
   `;
 }
 
-function renderHeader(page: BookPage, branding: SchoolBranding, sName: string, sGrade: string, sClass: string): string {
-  const countryName = branding.countryName || 'الجمهورية اليمنية';
-  const ministryName = branding.ministryName || 'وزارة التربية والتعليم';
+function renderHeader(page: BookPage, branding: SchoolBranding): string {
   const schoolName = branding.schoolName || 'مدارس ابن سيناء الأهلية';
-  const departmentName = branding.departmentName || 'قسم إدارة الجودة والتطوير';
-  const programName = branding.programName || 'الخطة العلاجية لمهارات القراءة والكتابة';
-  const academicYear = branding.academicYear || '1446-1447هـ';
-  const teacherName = branding.teacherName || '';
+  const departmentName = branding.departmentName || 'قسم إدارة الجودة والتطوير التعليمي';
   const qrBadgeHtml = renderQRCodeBadge(page, branding);
 
   return `
     <header class="page-header">
       <div class="header-top-row">
         
-        <!-- Right: Educational Administration & School -->
+        <!-- Right: School Branding (Compact) -->
         <div class="school-branding-group">
           ${branding.showLogoInPrint ? (
             branding.logoUrl 
@@ -2255,9 +2491,8 @@ function renderHeader(page: BookPage, branding: SchoolBranding, sName: string, s
                 </div>`
           ) : ''}
           <div class="school-titles">
-            <div class="country-line">${countryName} — ${ministryName}</div>
-            <h1>${schoolName}</h1>
-            <p>${departmentName}</p>
+            <h1 class="text-school-name">${schoolName}</h1>
+            <p class="text-dept-name">${departmentName}</p>
           </div>
         </div>
 
@@ -2267,58 +2502,58 @@ function renderHeader(page: BookPage, branding: SchoolBranding, sName: string, s
           <div class="page-main-title">${page.title}</div>
         </div>
 
-        <!-- Left: QR Code, Page Badge & Academic Year -->
+        <!-- Left: QR Code & Crisp Page Badge -->
         <div style="text-align: left; display: flex; align-items: center; gap: 8px;">
           ${qrBadgeHtml}
           <div>
             <div class="page-num-badge">${page.pageNumber}</div>
             <div class="page-num-sub">ص ${page.pageNumber} من ١٢١</div>
-            <div style="font-size: 9px; color: #64748b; font-weight: 700; margin-top: 2px;">${academicYear}</div>
           </div>
         </div>
       </div>
-
-      <!-- Student & Teacher Context Bar -->
-      ${branding.showStudentInfoInPrint ? `
-        <div class="student-info-bar">
-          <div class="info-item"><strong>اسم التلميذ/ة: </strong><span>${sName}</span></div>
-          <div class="info-item"><strong>الصف: </strong><span>${sGrade}</span></div>
-          <div class="info-item"><strong>الشعبة / الفصل: </strong><span>${sClass}</span></div>
-          ${teacherName ? `<div class="info-item"><strong>المعلم/ة: </strong><span>${teacherName}</span></div>` : ''}
-          <div class="info-item"><strong>التاريخ: </strong><span>.... / .... / ١٤٤هـ</span></div>
-        </div>
-      ` : ''}
     </header>
   `;
 }
 
 function renderFooter(page: BookPage, branding: SchoolBranding): string {
-  const countryName = branding.countryName || 'الجمهورية اليمنية';
   const schoolName = branding.schoolName || 'مدارس ابن سيناء الأهلية';
-  const departmentName = branding.departmentName || 'قسم إدارة الجودة والتطوير';
 
   return `
     <footer class="page-footer">
-      ${branding.showEvaluationBoxInPrint ? `
-        <div class="eval-box-grid">
-          <div>
-            <strong>تقييم الأداء والإتقان: </strong>
-            <span>[  ] متقن ⭐</span> &nbsp;
-            <span>[  ] يحتاج متابعة وتدريب</span>
+      ${branding.showEvaluationBoxInPrint !== false ? `
+        <div class="mastery-indicator-box">
+          <div class="mastery-indicator-top">
+            <div class="mastery-title-wrap">
+              <span class="mastery-title-icon">🎯</span>
+              <strong class="mastery-title-text">مؤشرات إتقان التلميذ (نظام المحاولات الأربع):</strong>
+            </div>
+            <div class="mastery-attempts-row">
+              <span class="attempt-check-pill"><span class="check-sq">[ &nbsp; ]</span> المحاولة الأولى ⭐⭐⭐</span>
+              <span class="attempt-check-pill"><span class="check-sq">[ &nbsp; ]</span> المحاولة الثانية ⭐⭐</span>
+              <span class="attempt-check-pill"><span class="check-sq">[ &nbsp; ]</span> المحاولة الثالثة ⭐</span>
+              <span class="attempt-check-pill"><span class="check-sq">[ &nbsp; ]</span> المحاولة الرابعة (علاجي)</span>
+            </div>
           </div>
-          <div>
-            <strong>توقيع معلم/ة المادة: </strong>
-            <span>........................</span>
-          </div>
-          <div>
-            <strong>توقيع ولي الأمر: </strong>
-            <span>........................</span>
+
+          <div class="mastery-indicator-meta">
+            <div class="meta-sign-item">
+              <strong>توقيع المعلم/ة: </strong>
+              <span class="sign-line">.......................................</span>
+            </div>
+            <div class="meta-sign-item">
+              <strong>تاريخ الإتقان: </strong>
+              <span class="date-line">.... / .... / ١٤٤هـ</span>
+            </div>
+            <div class="meta-sign-item">
+              <strong>توقيع ولي الأمر: </strong>
+              <span class="sign-line">.......................................</span>
+            </div>
           </div>
         </div>
       ` : ''}
 
       <div class="footer-bottom-row">
-        <span>🇾🇪 ${countryName} — ${schoolName}</span>
+        <span>${schoolName}</span>
         <span>الخطة العلاجية لمهارات القراءة والكتابة (١٢١ صفحة علاجية)</span>
         <span>صفحة ${page.pageNumber} من ١٢١</span>
       </div>
