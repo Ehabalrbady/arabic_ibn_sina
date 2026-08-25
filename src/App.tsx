@@ -1,22 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { Header } from './components/Header';
-import { PageRenderer } from './components/PageRenderer';
-import { BookTableOfContents } from './components/BookTableOfContents';
-import { EvaluationDashboard } from './components/EvaluationDashboard';
-import { DictationLab } from './components/DictationLab';
-import { SpeedReadingTrainer } from './components/SpeedReadingTrainer';
-import { SukoonTestTool } from './components/SukoonTestTool';
-import { MinimalPairsLab } from './components/MinimalPairsLab';
-import { DiagnosticTrackingMatrix } from './components/DiagnosticTrackingMatrix';
-import { FullBookPrintView } from './components/FullBookPrintView';
-import { SearchModal } from './components/SearchModal';
-import { LogoUploadModal } from './components/LogoUploadModal';
-import { PrintCenterModal } from './components/PrintCenterModal';
-import { PrintWorksheetDocument } from './components/PrintWorksheetDocument';
-import { ALL_BOOK_PAGES, getPageByNumber } from './data/bookData';
-import { INITIAL_EVALUATION_SKILLS } from './data/evaluationSkills';
-import { BookPage, EvaluationSkill } from './types/book';
-import { SchoolBranding, loadSchoolBranding, saveSchoolBranding, DEFAULT_BRANDING } from './utils/schoolBranding';
+import { Header } from './app_shell';
+import { 
+  PageRenderer, 
+  BookTableOfContents, 
+  SearchModal, 
+  ALL_BOOK_PAGES, 
+  getPageByNumber 
+} from './curriculum';
+import type { BookPage, EvaluationSkill } from './curriculum';
+import { 
+  EvaluationDashboard, 
+  SpeedReadingTrainer, 
+  SukoonTestTool, 
+  DiagnosticTrackingMatrix, 
+  INITIAL_EVALUATION_SKILLS 
+} from './reading_fluency_and_diagnostics';
+import { DictationLab } from './spelling_and_handwriting';
+import { MinimalPairsLab } from './phonological_awareness';
+import { 
+  FullBookPrintView, 
+  PrintCenterModal, 
+  PrintWorksheetDocument 
+} from './curriculum_publishing';
+import { 
+  LogoUploadModal, 
+  loadSchoolBranding, 
+  saveSchoolBranding, 
+  DEFAULT_BRANDING 
+} from './institutional_branding';
+import type { SchoolBranding } from './institutional_branding';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'pages' | 'units' | 'dictation' | 'speed' | 'sukoon_test' | 'minimal_pairs' | 'diagnostic_matrix' | 'evaluation' | 'toc' | 'print_book'>('pages');
