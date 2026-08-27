@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Volume2, 
   ChevronRight, 
@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { BookPage, EvaluationSkill } from './types';
-import { playArabicAudio } from '../speech_and_multimedia/audio';
+import { playArabicAudio, setAudioPrefetchContext } from '../speech_and_multimedia/audio';
 import { InteractiveTracingBoard } from '../spelling_and_handwriting/InteractiveTracingBoard';
 import { SyllableCutterModal } from '../spelling_and_handwriting/SyllableCutterModal';
 import { IbnSinaLogo } from '../institutional_branding/IbnSinaLogo';
@@ -60,6 +60,40 @@ export const PageRenderer: React.FC<PageRendererProps> = ({
   
   // Coloring state for page 118
   const [coloredItems, setColoredItems] = useState<Record<string, 'open_ta' | 'tied_ta' | 'ha'>>({});
+
+  useEffect(() => {
+    // Extract words from page for prefetching
+    const words: string[] = [];
+    const c = page.content;
+    if (c) {
+      if (c.gridItems) words.push(...c.gridItems);
+      if (c.dictationSuggestedWords) words.push(...c.dictationSuggestedWords);
+      if (c.analysisWords) words.push(...c.analysisWords.map(w => w.word));
+      if (c.connectExercises) {
+        c.connectExercises.forEach(ex => {
+          words.push(ex.separated);
+          words.push(ex.combined);
+        });
+      }
+      if (c.sentences) words.push(...c.sentences);
+      if (c.sortingItems) words.push(...c.sortingItems.map(item => item.word.split('->')[0].trim()));
+      if (c.pictureBlanks) {
+        c.pictureBlanks.forEach(item => {
+          words.push(item.wordComplete);
+          words.push(item.correct);
+        });
+      }
+      if (c.colorItems) words.push(...c.colorItems.map(item => item.word));
+      if (c.ruleBoxes) words.push(...c.ruleBoxes.map(b => b.example));
+      if (c.tracingItems) {
+        c.tracingItems.forEach(t => {
+          words.push(t.prompt);
+          if (t.example) words.push(t.example);
+        });
+      }
+    }
+    setAudioPrefetchContext(words);
+  }, [page]);
 
   // Skill mapping
   const associatedSkill = skills.find(s => s.id === page.skillId);

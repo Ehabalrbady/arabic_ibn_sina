@@ -15,7 +15,9 @@ import {
   Image as ImageIcon,
   Upload,
   Sliders,
-  Headphones
+  Headphones,
+  Heart,
+  Settings
 } from 'lucide-react';
 import { ALL_BOOK_PAGES } from '../curriculum/bookData';
 import { BookPage } from '../curriculum/types';
@@ -23,8 +25,8 @@ import { IbnSinaLogo } from '../institutional_branding/IbnSinaLogo';
 import { SchoolBranding } from '../institutional_branding/schoolBranding';
 
 interface HeaderProps {
-  activeTab: 'pages' | 'units' | 'dictation' | 'speed' | 'sukoon_test' | 'minimal_pairs' | 'diagnostic_matrix' | 'evaluation' | 'toc' | 'print_book';
-  setActiveTab: (tab: 'pages' | 'units' | 'dictation' | 'speed' | 'sukoon_test' | 'minimal_pairs' | 'diagnostic_matrix' | 'evaluation' | 'toc' | 'print_book') => void;
+  activeTab: 'pages' | 'units' | 'dictation' | 'speed' | 'sukoon_test' | 'minimal_pairs' | 'diagnostic_matrix' | 'evaluation' | 'toc' | 'print_book' | 'parents_portal' | 'curriculum_editor';
+  setActiveTab: (tab: 'pages' | 'units' | 'dictation' | 'speed' | 'sukoon_test' | 'minimal_pairs' | 'diagnostic_matrix' | 'evaluation' | 'toc' | 'print_book' | 'parents_portal' | 'curriculum_editor') => void;
   currentPage: number;
   setCurrentPage: (page: number) => void;
   onOpenSearch: () => void;
@@ -327,6 +329,30 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Printer className="w-4 h-4 text-emerald-900" />
             <span>🖨️ منهج الكتاب الكامل للطباعة (A4)</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('parents_portal')}
+            className={`px-3 py-2 rounded-xl font-bold whitespace-nowrap transition flex items-center gap-1.5 border ${
+              activeTab === 'parents_portal'
+                ? 'bg-rose-600 text-white border-rose-600 shadow-sm'
+                : 'text-rose-900 bg-rose-50 hover:bg-rose-100 border-rose-200'
+            }`}
+          >
+            <Heart className="w-4 h-4 fill-rose-100" />
+            <span>👨‍👩‍👦 بوابة ولي الأمر الذكية</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('curriculum_editor')}
+            className={`px-3 py-2 rounded-xl font-bold whitespace-nowrap transition flex items-center gap-1.5 border ${
+              activeTab === 'curriculum_editor'
+                ? 'bg-indigo-700 text-white border-indigo-700 shadow-sm'
+                : 'text-indigo-900 bg-indigo-50 hover:bg-indigo-100 border-indigo-200'
+            }`}
+          >
+            <Settings className="w-4 h-4" />
+            <span>⚙️ محرر وإعداد المنهج</span>
           </button>
         </nav>
       </div>

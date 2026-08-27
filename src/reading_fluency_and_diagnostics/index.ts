@@ -4,6 +4,7 @@ export { EvaluationDashboard } from './EvaluationDashboard';
 export { SpeedReadingTrainer } from './SpeedReadingTrainer';
 export { SukoonTestTool } from './SukoonTestTool';
 export { CertificateModal } from './CertificateModal';
+export { ParentsPortal } from './ParentsPortal';
 export { INITIAL_EVALUATION_SKILLS } from './evaluationSkills';
 export { ACHIEVEMENT_BADGES } from './achievementBadges';
 export type { AchievementBadge } from './achievementBadges';

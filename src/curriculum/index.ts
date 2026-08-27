@@ -6,3 +6,4 @@ export * from './bookData';
 export { PageRenderer } from './PageRenderer';
 export { BookTableOfContents } from './BookTableOfContents';
 export { SearchModal } from './SearchModal';
+export { CurriculumEditor } from './CurriculumEditor';

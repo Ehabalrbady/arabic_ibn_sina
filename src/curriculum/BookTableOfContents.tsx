@@ -15,13 +15,14 @@ import {
   ChevronUp
 } from 'lucide-react';
 import { BOOK_UNITS, ALL_BOOK_PAGES } from './bookData';
-import { UnitId } from './types';
+import { UnitId, BookPage } from './types';
 
 interface TOCProps {
   onSelectPage: (pageNumber: number) => void;
+  pages?: BookPage[];
 }
 
-export const BookTableOfContents: React.FC<TOCProps> = ({ onSelectPage }) => {
+export const BookTableOfContents: React.FC<TOCProps> = ({ onSelectPage, pages = ALL_BOOK_PAGES }) => {
   const [expandedUnit, setExpandedUnit] = useState<UnitId | null>('letters');
 
   const getUnitIcon = (iconName: string) => {
@@ -65,7 +66,7 @@ export const BookTableOfContents: React.FC<TOCProps> = ({ onSelectPage }) => {
       {/* Units Accordion Grid */}
       <div className="space-y-4">
         {BOOK_UNITS.map((unit) => {
-          const unitPages = ALL_BOOK_PAGES.filter(p => p.unitId === unit.id);
+          const unitPages = pages.filter(p => p.unitId === unit.id);
           const isExpanded = expandedUnit === unit.id;
 
           return (

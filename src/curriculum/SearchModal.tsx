@@ -1,14 +1,16 @@
 import React, { useState, useMemo } from 'react';
 import { Search, X, BookOpen, Volume2, ArrowLeft } from 'lucide-react';
 import { ALL_BOOK_PAGES } from './bookData';
+import { BookPage } from './types';
 import { playArabicAudio } from '../speech_and_multimedia/audio';
 
 interface SearchModalProps {
   onClose: () => void;
   onSelectPage: (pageNumber: number) => void;
+  pages?: BookPage[];
 }
 
-export const SearchModal: React.FC<SearchModalProps> = ({ onClose, onSelectPage }) => {
+export const SearchModal: React.FC<SearchModalProps> = ({ onClose, onSelectPage, pages = ALL_BOOK_PAGES }) => {
   const [query, setQuery] = useState('');
 
   const searchResults = useMemo(() => {
@@ -16,7 +18,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ onClose, onSelectPage 
     const q = query.trim().toLowerCase();
     const results: Array<{ pageNumber: number; title: string; matchReason: string; word?: string }> = [];
 
-    ALL_BOOK_PAGES.forEach((page) => {
+    pages.forEach((page) => {
       // Check title
       if (page.title.toLowerCase().includes(q)) {
         results.push({ pageNumber: page.pageNumber, title: page.title, matchReason: 'عنوان الصفحة' });
