@@ -352,7 +352,7 @@ export const SyllableLegendGuide: React.FC<{ compact?: boolean }> = ({ compact =
   return (
     <div className={`bg-white border border-emerald-200 rounded-2xl p-3 shadow-2xs ${compact ? 'text-xs' : 'text-sm'}`}>
       <div className="flex items-center gap-1.5 text-emerald-950 font-black mb-2">
-        <span className="text-base">🌈</span>
+        <span className="text-base">🔤</span>
         <span>دليل الترميز الصوتي المقطعي (نهج القراءة المبكر EGR):</span>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-bold">

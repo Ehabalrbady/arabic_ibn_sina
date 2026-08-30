@@ -13,6 +13,7 @@
  */
 
 import { getCachedAudio, saveCachedAudio } from './audioCache';
+import { Howl, Howler } from 'howler';
 
 export type VoicePersona = 'teacher' | 'child';
 
@@ -83,6 +84,29 @@ if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
   }
 }
 
+// Global user-gesture audio unlocker for mobile devices (iOS Safari, Android Chrome, WhatsApp webview)
+let isAudioUnlocked = false;
+export function unlockAllAudioContexts() {
+  if (typeof window === 'undefined') return;
+  try {
+    if (Howler && Howler.ctx && Howler.ctx.state === 'suspended') {
+      Howler.ctx.resume().catch(() => {});
+    }
+    if (synth && synth.paused) {
+      synth.resume();
+    }
+    isAudioUnlocked = true;
+  } catch (e) {}
+}
+
+if (typeof window !== 'undefined') {
+  const unlockEvents = ['touchstart', 'touchend', 'pointerdown', 'click', 'keydown'];
+  const unlockHandler = () => {
+    unlockAllAudioContexts();
+    unlockEvents.forEach(evt => window.removeEventListener(evt, unlockHandler));
+  };
+  unlockEvents.forEach(evt => window.addEventListener(evt, unlockHandler, { passive: true, once: true }));
+}
 
 /**
  * Retrieves the stored audio settings
@@ -253,9 +277,8 @@ export function normalizeArabicTextForTTS(text: string, simplifyTanween = false)
   return normalized;
 }
 
-import { Howl, Howler } from 'howler';
-
-// Store the current Howl instance so we can stop it or track progress
+// Store the active HTMLAudioElement or Howl instance so we can stop it or track progress
+let currentAudioElement: HTMLAudioElement | null = null;
 let currentHowl: Howl | null = null;
 let progressReqId: number | null = null;
 
@@ -267,8 +290,7 @@ function sleep(ms: number): Promise<void> {
 }
 
 /**
- * Converts PCM base64 string to a proper WAV data URI that Howler can play,
- * or plays standard formats directly.
+ * Converts PCM base64 string to a proper WAV data URI
  */
 function pcmToWavDataUri(base64Data: string, sampleRate: number): string {
   const binaryStr = atob(base64Data);
@@ -327,73 +349,122 @@ function pcmToWavDataUri(base64Data: string, sampleRate: number): string {
 }
 
 /**
- * Plays base64 PCM 16-bit 24kHz or standard Audio Blob using Howler.js
+ * Robust universal audio player: Plays via HTML5 Audio with Howler fallback.
+ * Works seamlessly across iOS Safari, Android Chrome, and WhatsApp webviews.
+ */
+async function playAudioUri(srcUri: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    stopAudio();
+    unlockAllAudioContexts();
+
+    try {
+      // 1. Primary Player: Native HTMLAudioElement (Maximum compatibility on mobile iOS/Android)
+      const audio = new Audio();
+      audio.src = srcUri;
+      audio.preload = 'auto';
+      currentAudioElement = audio;
+
+      const cleanup = () => {
+        if (progressReqId) {
+          cancelAnimationFrame(progressReqId);
+          progressReqId = null;
+        }
+        if (currentAudioElement === audio) {
+          currentAudioElement = null;
+        }
+      };
+
+      const trackProgress = () => {
+        if (audio && !audio.paused && !audio.ended && audio.duration > 0) {
+          const progress = audio.currentTime / audio.duration;
+          window.dispatchEvent(new CustomEvent('ibn_sinai_audio_progress', { detail: progress }));
+          progressReqId = requestAnimationFrame(trackProgress);
+        }
+      };
+
+      audio.onplay = () => {
+        progressReqId = requestAnimationFrame(trackProgress);
+      };
+
+      audio.onended = () => {
+        cleanup();
+        window.dispatchEvent(new CustomEvent('ibn_sinai_audio_progress', { detail: 1 }));
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('ibn_sinai_audio_progress', { detail: 0 }));
+        }, 150);
+        resolve(true);
+      };
+
+      audio.onerror = (e) => {
+        cleanup();
+        console.warn("HTML5 Audio element error, attempting Howler fallback:", e);
+        // Fallback to Howler
+        playWithHowler(srcUri).then(resolve);
+      };
+
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          console.warn("Audio play() was prevented, attempting Howler fallback:", err);
+          cleanup();
+          playWithHowler(srcUri).then(resolve);
+        });
+      }
+    } catch (err) {
+      console.warn("Native Audio constructor error, using Howler:", err);
+      playWithHowler(srcUri).then(resolve);
+    }
+  });
+}
+
+function playWithHowler(srcUri: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    try {
+      currentHowl = new Howl({
+        src: [srcUri],
+        html5: true, // Use HTML5 audio mode in Howler for better mobile stream handling
+        onend: () => {
+          currentHowl = null;
+          window.dispatchEvent(new CustomEvent('ibn_sinai_audio_progress', { detail: 0 }));
+          resolve(true);
+        },
+        onloaderror: () => {
+          currentHowl = null;
+          resolve(false);
+        },
+        onplayerror: () => {
+          currentHowl = null;
+          resolve(false);
+        }
+      });
+      currentHowl.play();
+    } catch (e) {
+      currentHowl = null;
+      resolve(false);
+    }
+  });
+}
+
+/**
+ * Plays base64 PCM 16-bit 24kHz or standard Audio Blob
  */
 async function playBase64Audio(
   base64Data: string, 
   mimeType: string = "audio/pcm;rate=24000", 
   sampleRate: number = 24000
 ): Promise<boolean> {
-  return new Promise((resolve) => {
-    try {
-      stopAudio();
-
-      let srcUri = '';
-      // Check if it's raw PCM
-      if (mimeType.includes("pcm") || mimeType.includes("raw")) {
-        srcUri = pcmToWavDataUri(base64Data, sampleRate);
-      } else {
-        // Standard formats
-        srcUri = `data:${mimeType};base64,${base64Data}`;
-      }
-
-      currentHowl = new Howl({
-        src: [srcUri],
-        format: ['wav', 'mp3', 'webm'],
-        html5: false, // Ensure we use Web Audio API for better timing
-        onplay: () => {
-          // Track progress
-          const trackProgress = () => {
-            if (currentHowl && currentHowl.playing()) {
-              const seek = currentHowl.seek() as number;
-              const duration = currentHowl.duration();
-              const progress = duration > 0 ? seek / duration : 0;
-              window.dispatchEvent(new CustomEvent('ibn_sinai_audio_progress', { detail: progress }));
-              progressReqId = requestAnimationFrame(trackProgress);
-            }
-          };
-          progressReqId = requestAnimationFrame(trackProgress);
-        },
-        onend: () => {
-          if (progressReqId) cancelAnimationFrame(progressReqId);
-          window.dispatchEvent(new CustomEvent('ibn_sinai_audio_progress', { detail: 1 })); // complete
-          setTimeout(() => {
-            window.dispatchEvent(new CustomEvent('ibn_sinai_audio_progress', { detail: 0 })); // reset
-          }, 200);
-          currentHowl = null;
-          resolve(true);
-        },
-        onloaderror: (id, err) => {
-          console.warn("Howler load error:", err);
-          if (progressReqId) cancelAnimationFrame(progressReqId);
-          currentHowl = null;
-          resolve(false);
-        },
-        onplayerror: (id, err) => {
-          console.warn("Howler play error:", err);
-          if (progressReqId) cancelAnimationFrame(progressReqId);
-          currentHowl = null;
-          resolve(false);
-        }
-      });
-
-      currentHowl.play();
-    } catch (e) {
-      console.warn("Base64 Audio Playback error:", e);
-      if (progressReqId) cancelAnimationFrame(progressReqId);
-      resolve(false);
+  try {
+    let srcUri = '';
+    if (mimeType.includes("pcm") || mimeType.includes("raw")) {
+      srcUri = pcmToWavDataUri(base64Data, sampleRate);
+    } else {
+      srcUri = `data:${mimeType};base64,${base64Data}`;
     }
-  });
+    return await playAudioUri(srcUri);
+  } catch (e) {
+    console.warn("Base64 Audio error:", e);
+    return false;
+  }
 }
 
 /**
@@ -403,11 +474,16 @@ function findBestArabicVoice(persona: VoicePersona, userVoiceName?: string): Spe
   if (!synth) return undefined;
   
   if (cachedVoices.length === 0) {
-    cachedVoices = synth.getVoices() || [];
+    try {
+      cachedVoices = synth.getVoices() || [];
+    } catch (e) {}
   }
 
   const allVoices = cachedVoices;
-  const arabicVoices = allVoices.filter(v => v.lang && (v.lang.toLowerCase().startsWith('ar') || v.name.toLowerCase().includes('arabic')));
+  const arabicVoices = allVoices.filter(v => 
+    (v.lang && (v.lang.toLowerCase().startsWith('ar') || v.lang.toLowerCase().includes('ara'))) || 
+    (v.name && /arabic|saudi|egypt|مريم|طارق|ماجد|ليلى|هدى|سلمى|عربي/i.test(v.name))
+  );
 
   if (userVoiceName) {
     const userVoice = allVoices.find(v => v.name === userVoiceName);
@@ -416,13 +492,11 @@ function findBestArabicVoice(persona: VoicePersona, userVoiceName?: string): Spe
 
   if (arabicVoices.length > 0) {
     if (persona === 'child') {
-      // Prefer female or high clarity Arabic voices
       const childMatch = arabicVoices.find(v => 
         /laila|mariam|zariyah|hoda|salma|zeina|shatha|female/i.test(v.name)
       );
       if (childMatch) return childMatch;
     } else {
-      // Teacher voice: prefer articulate natural voice
       const teacherMatch = arabicVoices.find(v => 
         /maged|majed|tariq|tarik|naayf|hamed|shakir|laila|google/i.test(v.name)
       );
@@ -431,12 +505,11 @@ function findBestArabicVoice(persona: VoicePersona, userVoiceName?: string): Spe
     return arabicVoices[0];
   }
 
-  // If no Arabic voice found, find any voice supporting Arabic or default
-  return allVoices.find(v => v.lang.startsWith('ar')) || allVoices[0];
+  return allVoices.find(v => v.lang && v.lang.startsWith('ar')) || allVoices[0];
 }
 
 /**
- * Robust Web Speech Synthesis with explicit persona frequency tuning
+ * Robust Web Speech Synthesis with explicit persona frequency tuning and mobile unlock
  */
 function speakSingleUtteranceFallback(
   text: string, 
@@ -450,27 +523,28 @@ function speakSingleUtteranceFallback(
     }
 
     try {
-      // Small pause to allow previous cancel to settle across Chromium / WebKit
-      await sleep(35);
+      // Resume synthesis if suspended on iOS / Android
+      if (synth.paused) {
+        synth.resume();
+      }
+      synth.cancel();
+      await sleep(40);
 
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'ar-SA';
       
       const currentPersona = options.persona || settings.voicePersona || 'teacher';
 
-      // 1. Calculate effective rate
       let effectiveRate = options.rate !== undefined 
         ? options.rate 
         : (settings.rate || PERSONA_INFO[currentPersona].defaultRate);
 
-      // 2. Calculate effective pitch
       let effectivePitch = options.pitch !== undefined 
         ? options.pitch 
-        : (currentPersona === 'child' ? 1.55 : 1.0);
+        : (currentPersona === 'child' ? 1.45 : 1.0);
 
-      // Apply settings pitch multiplier
       if (settings.pitch && options.pitch === undefined) {
-        effectivePitch = (currentPersona === 'child' ? 1.55 : 1.0) * settings.pitch;
+        effectivePitch = (currentPersona === 'child' ? 1.45 : 1.0) * settings.pitch;
       }
 
       utterance.rate = Math.min(1.8, Math.max(0.4, effectiveRate));
@@ -481,8 +555,19 @@ function speakSingleUtteranceFallback(
         utterance.voice = voice;
       }
 
-      utterance.onend = () => resolve(true);
-      utterance.onerror = () => resolve(false);
+      // Safety timeout in case browser TTS stalls on mobile
+      const safetyTimeout = setTimeout(() => {
+        resolve(true);
+      }, 5000);
+
+      utterance.onend = () => {
+        clearTimeout(safetyTimeout);
+        resolve(true);
+      };
+      utterance.onerror = () => {
+        clearTimeout(safetyTimeout);
+        resolve(false);
+      };
 
       synth.speak(utterance);
     } catch (e) {
@@ -495,7 +580,6 @@ let audioPrefetchContext: string[] = [];
 
 /**
  * Sets the current context of words for prefetching.
- * Called by page renderers when mounting a new page.
  */
 export function setAudioPrefetchContext(words: string[]) {
   audioPrefetchContext = words.map(w => normalizeArabicTextForTTS(w, false));
@@ -518,24 +602,25 @@ export async function playArabicAudio(
     forceFallback?: boolean;
   } = {}
 ): Promise<boolean> {
+  unlockAllAudioContexts();
   const settings = getAudioSettings();
   const persona: VoicePersona = options.persona || settings.voicePersona || 'teacher';
-  // Segmented spelling is only applied if explicitly requested in options
   const useSegmented = options.segmented === true;
   const useTanween = settings.tanweenSimplification;
   const cleanText = normalizeArabicTextForTTS(text, useTanween);
+
+  if (!cleanText) return false;
 
   // Pre-fetching the next word in the current page context
   const currentIndex = audioPrefetchContext.indexOf(cleanText);
   if (currentIndex >= 0 && currentIndex < audioPrefetchContext.length - 1) {
     const nextWord = audioPrefetchContext[currentIndex + 1];
-    // Start prefetching in background
     prefetchAudio(nextWord, { persona, segmented: useSegmented });
   }
 
   stopAudio();
 
-  // 1. Check local persistent IndexedDB cache (0ms instant playback)
+  // Tier 1: Check local persistent IndexedDB cache (0ms instant playback)
   if (!options.forceFallback) {
     try {
       const cached = await getCachedAudio(cleanText, persona, useSegmented);
@@ -550,7 +635,7 @@ export async function playArabicAudio(
       console.warn("Cache lookup error:", e);
     }
 
-    // 2. If not in cache, try calling the server-side Gemini AI TTS API
+    // Tier 2: Fetch high-fidelity audio from server API (Gemini or Server Google TTS stream)
     try {
       const response = await fetch('/api/tts', {
         method: 'POST',
@@ -565,15 +650,15 @@ export async function playArabicAudio(
       if (response.ok) {
         const data = await response.json();
         if (data.audioBase64) {
-          await saveCachedAudio(
+          saveCachedAudio(
             cleanText, 
             persona, 
             useSegmented, 
             data.audioBase64, 
-            data.mimeType || "audio/pcm;rate=24000", 
+            data.mimeType || "audio/mpeg", 
             data.sampleRate || 24000,
-            'gemini_tts'
-          );
+            data.source || 'gemini_tts'
+          ).catch(() => {});
 
           const played = await playBase64Audio(data.audioBase64, data.mimeType, data.sampleRate);
           if (played) {
@@ -583,11 +668,30 @@ export async function playArabicAudio(
         }
       }
     } catch (e) {
-      // Seamlessly fallback to native Arabic browser speech
+      console.warn("Server TTS request failed, using direct stream fallback:", e);
     }
+
+    // Tier 3: Direct Streaming Audio from `/api/tts-audio` or direct Google TTS stream
+    try {
+      const streamUrl = `/api/tts-audio?text=${encodeURIComponent(cleanText)}`;
+      const streamPlayed = await playAudioUri(streamUrl);
+      if (streamPlayed) {
+        if (options.onEnd) options.onEnd();
+        return true;
+      }
+    } catch (e) {}
+
+    try {
+      const directUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ar&client=tw-ob&q=${encodeURIComponent(cleanText)}`;
+      const directPlayed = await playAudioUri(directUrl);
+      if (directPlayed) {
+        if (options.onEnd) options.onEnd();
+        return true;
+      }
+    } catch (e) {}
   }
 
-  // 3. In-Browser Natural Arabic Speech Engine (Crisp, human pronunciation with voice persona tuning)
+  // Tier 4: In-Browser Natural Arabic Web Speech Engine
   try {
     if (useSegmented) {
       const words = text.trim().split(/\s+/);
@@ -620,7 +724,6 @@ export async function playArabicAudio(
       if (options.onEnd) options.onEnd();
       return true;
     } else {
-      // Standard continuous reading - full word/sentence in one natural fluent utterance
       const success = await speakSingleUtteranceFallback(cleanText, settings, {
         rate: options.rate,
         pitch: options.pitch,
@@ -637,7 +740,6 @@ export async function playArabicAudio(
 
 /**
  * Pre-fetches audio for a given text and persona and caches it.
- * This is useful for preloading the next word on a page.
  */
 export async function prefetchAudio(
   text: string,
@@ -651,12 +753,12 @@ export async function prefetchAudio(
   const useSegmented = options.segmented === true;
   const cleanText = normalizeArabicTextForTTS(text, settings.tanweenSimplification);
 
-  try {
-    // Check if it's already cached
-    const cached = await getCachedAudio(cleanText, persona, useSegmented);
-    if (cached) return; // Already cached, no need to prefetch
+  if (!cleanText) return;
 
-    // Not cached, so fetch from API
+  try {
+    const cached = await getCachedAudio(cleanText, persona, useSegmented);
+    if (cached) return;
+
     const response = await fetch('/api/tts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -671,25 +773,32 @@ export async function prefetchAudio(
       const data = await response.json();
       if (data.audioBase64) {
         await saveCachedAudio(
-          cleanText,
-          persona,
-          useSegmented,
-          data.audioBase64,
-          data.mimeType || "audio/pcm;rate=24000",
-          data.sampleRate || 24000,
-          'gemini_tts'
+          cleanText, 
+          persona, 
+          useSegmented, 
+          data.audioBase64, 
+          data.mimeType || 'audio/mpeg', 
+          data.sampleRate || 24000, 
+          data.source || 'gemini_tts'
         );
       }
     }
-  } catch (e) {
-    // Fail silently in background
-  }
+  } catch (e) {}
 }
 
 /**
  * Stops all audio currently playing
  */
 export function stopAudio() {
+  if (currentAudioElement) {
+    try {
+      currentAudioElement.pause();
+      currentAudioElement.currentTime = 0;
+      currentAudioElement.removeAttribute('src');
+      currentAudioElement.load();
+    } catch (e) {}
+    currentAudioElement = null;
+  }
   if (currentHowl) {
     try {
       currentHowl.stop();
@@ -703,6 +812,8 @@ export function stopAudio() {
     window.dispatchEvent(new CustomEvent('ibn_sinai_audio_progress', { detail: 0 }));
   }
   if (synth) {
-    synth.cancel();
+    try {
+      synth.cancel();
+    } catch (e) {}
   }
 }

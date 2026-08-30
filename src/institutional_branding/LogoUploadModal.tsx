@@ -6,19 +6,21 @@ import {
   Check, 
   School, 
   Sparkles, 
-  Image as ImageIcon,
-  RotateCcw,
-  Sliders,
-  MapPin,
-  Building,
-  User,
-  GraduationCap,
-  FileText,
-  Printer,
-  Flag,
-  Volume2
+  Image as ImageIcon, 
+  RotateCcw, 
+  Sliders, 
+  MapPin, 
+  Building, 
+  User, 
+  GraduationCap, 
+  FileText, 
+  Printer, 
+  Flag, 
+  Volume2,
+  Share2,
+  Smartphone
 } from 'lucide-react';
-import { SchoolBranding } from './schoolBranding';
+import { SchoolBranding, generateStudentShareableLink } from './schoolBranding';
 import { IbnSinaLogo } from './IbnSinaLogo';
 import { 
   getAudioSettings, 
@@ -36,13 +38,15 @@ interface LogoUploadModalProps {
   onSaveBranding: (updated: SchoolBranding) => void;
   onClose: () => void;
   onUpdateStudentInfo?: (name: string, grade: string, studentClass: string) => void;
+  onOpenAndroidModal?: () => void;
 }
 
 export const LogoUploadModal: React.FC<LogoUploadModalProps> = ({
   branding,
   onSaveBranding,
   onClose,
-  onUpdateStudentInfo
+  onUpdateStudentInfo,
+  onOpenAndroidModal
 }) => {
   const [currentBranding, setCurrentBranding] = useState<SchoolBranding>({ ...branding });
   const [previewError, setPreviewError] = useState<string | null>(null);
@@ -59,6 +63,17 @@ export const LogoUploadModal: React.FC<LogoUploadModalProps> = ({
   const [isBatchGenerating, setIsBatchGenerating] = useState(false);
   const [batchProgress, setBatchProgress] = useState(0);
   const [batchMessage, setBatchMessage] = useState('');
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  const handleCopyDirectLink = () => {
+    const sName = localStorage.getItem('ibn_sinai_student_name') || 'طالب متميز';
+    const sGrade = localStorage.getItem('ibn_sinai_student_grade') || '';
+    const sCls = localStorage.getItem('ibn_sinai_student_class') || '';
+    const link = generateStudentShareableLink(currentBranding, sName, sGrade, sCls, 'student_hub');
+    navigator.clipboard.writeText(link);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 3000);
+  };
 
   const refreshCacheStats = async () => {
     try {
@@ -906,22 +921,53 @@ export const LogoUploadModal: React.FC<LogoUploadModalProps> = ({
         )}
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-between gap-2 pt-4 border-t border-slate-100">
-          <div className="text-[11px] text-slate-500">
-            🇾🇪 الجمهورية اليمنية — {currentBranding.schoolName}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-100">
+          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+            <button
+              type="button"
+              onClick={handleCopyDirectLink}
+              className={`px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-xs cursor-pointer ${
+                copiedLink 
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-amber-400 hover:bg-amber-300 text-slate-950'
+              }`}
+              title="نسخ رابط الطالب المباشر حاملاً الشعار والبيانات المدخلة"
+            >
+              {copiedLink ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
+              <span>{copiedLink ? 'تم نسخ الرابط!' : 'نسخ رابط الطالب'}</span>
+            </button>
+
+            {onOpenAndroidModal && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onOpenAndroidModal();
+                }}
+                className="px-3.5 py-2 rounded-xl text-xs font-black bg-emerald-100 hover:bg-emerald-200 text-emerald-950 border border-emerald-300 transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+                title="تجهيز رمز الاستجابة السريعة وتطبيق الأندرويد"
+              >
+                <Smartphone className="w-4 h-4 text-emerald-800" />
+                <span>تطبيق أندرويد و QR 📲</span>
+              </button>
+            )}
+
+            <span className="text-[11px] text-slate-500 hidden md:inline">
+              🇾🇪 {currentBranding.schoolName}
+            </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
             <button
               onClick={onClose}
-              className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition"
+              className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer"
             >
               إلغاء
             </button>
 
             <button
               onClick={handleSave}
-              className="px-6 py-2 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-black transition flex items-center gap-2 shadow-md"
+              className="px-6 py-2 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-black transition flex items-center gap-2 shadow-md cursor-pointer"
             >
               <Check className="w-4 h-4" />
               <span>حفظ وتطبيق التعديلات</span>

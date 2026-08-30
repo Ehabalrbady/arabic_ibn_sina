@@ -1,0 +1,15 @@
+{
+  "appId": "com.ibnsina.readingpath",
+  "appName": "مسار القراءة",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "https://ais-pre-bgvnogbos6fm7ymiuagxnu-947407300469.europe-west2.run.app/?mode=student&tab=student_hub",
+    "cleartext": true
+  },
+  "android": {
+    "allowMixedContent": true,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": true
+  }
+}

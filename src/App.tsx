@@ -27,19 +27,25 @@ import {
   LogoUploadModal, 
   loadSchoolBranding, 
   saveSchoolBranding, 
-  DEFAULT_BRANDING 
+  DEFAULT_BRANDING,
+  decodeBrandingFromUrl,
+  generateStudentShareableLink
 } from './institutional_branding';
 import type { SchoolBranding } from './institutional_branding';
 import { CurriculumEditor } from './curriculum/CurriculumEditor';
 import { AccessibilityControls } from './components/AccessibilityControls';
 import { QuickAudioBar } from './speech_and_multimedia/QuickAudioBar';
+import { StudentHub } from './student_portal';
+import { AndroidInstallModal } from './pwa/AndroidInstallModal';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'pages' | 'units' | 'dictation' | 'speed' | 'sukoon_test' | 'minimal_pairs' | 'diagnostic_matrix' | 'evaluation' | 'toc' | 'print_book' | 'parents_portal' | 'curriculum_editor'>('pages');
+  const [activeTab, setActiveTab] = useState<'pages' | 'student_hub' | 'units' | 'dictation' | 'speed' | 'sukoon_test' | 'minimal_pairs' | 'diagnostic_matrix' | 'evaluation' | 'toc' | 'print_book' | 'parents_portal' | 'curriculum_editor'>('pages');
   const [currentPageNum, setCurrentPageNum] = useState<number>(1);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isLogoModalOpen, setIsLogoModalOpen] = useState(false);
+  const [isAndroidModalOpen, setIsAndroidModalOpen] = useState(false);
   const [isPrintCenterOpen, setIsPrintCenterOpen] = useState(false);
+  const [isStudentMode, setIsStudentMode] = useState<boolean>(false);
   const [studentName, setStudentName] = useState<string>('طالب متميز');
   const [studentGrade, setStudentGrade] = useState<string>('الصف الأول / الثاني الابتدائي');
   const [studentClass, setStudentClass] = useState<string>('١ / أ');
@@ -79,8 +85,79 @@ export default function App() {
 
   useEffect(() => {
     try {
-      // 1. Detect if this is a shared portal link from teacher to parent
       const params = new URLSearchParams(window.location.search);
+
+      // 1. Decode & persist incoming School Branding from the URL automatically
+      const decodedBranding = decodeBrandingFromUrl(params);
+      if (decodedBranding) {
+        const currentSaved = loadSchoolBranding();
+        const mergedBranding: SchoolBranding = {
+          ...currentSaved,
+          ...decodedBranding
+        };
+        setBranding(mergedBranding);
+        saveSchoolBranding(mergedBranding); // Persist permanently on the receiver device!
+      }
+
+      // 2. Detect Student Mode from Link
+      const modeParam = params.get('mode');
+      const studentLinkParam = params.get('student_link');
+      const tabParam = params.get('tab');
+      
+      const isStudent = modeParam === 'student' || studentLinkParam === 'true' || tabParam === 'student_hub';
+      if (isStudent) {
+        setIsStudentMode(true);
+        if (tabParam === 'pages') {
+          setActiveTab('pages');
+        } else {
+          setActiveTab('student_hub');
+        }
+      }
+
+      // 3. Load student details from URL or local storage
+      const queryStudent = params.get('student') || params.get('name');
+      if (queryStudent) {
+        try {
+          const decoded = decodeURIComponent(queryStudent);
+          if (decoded) {
+            setStudentName(decoded);
+            localStorage.setItem('ibn_sinai_student_name', decoded);
+          }
+        } catch (e) {}
+      }
+
+      const queryGrade = params.get('grade');
+      if (queryGrade) {
+        try {
+          const decoded = decodeURIComponent(queryGrade);
+          if (decoded) {
+            setStudentGrade(decoded);
+            localStorage.setItem('ibn_sinai_student_grade', decoded);
+          }
+        } catch (e) {}
+      }
+
+      const queryCls = params.get('cls');
+      if (queryCls) {
+        try {
+          const decoded = decodeURIComponent(queryCls);
+          if (decoded) {
+            setStudentClass(decoded);
+            localStorage.setItem('ibn_sinai_student_class', decoded);
+          }
+        } catch (e) {}
+      }
+
+      // Jump to page if specified in URL (e.g. ?p=15 or ?page=15)
+      const queryPage = params.get('page') || params.get('p');
+      if (queryPage) {
+        const pNum = Number(queryPage);
+        if (pNum >= 1 && pNum <= 121) {
+          setCurrentPageNum(pNum);
+        }
+      }
+
+      // Parent portal link handling
       if (params.get('portal') === 'true') {
         const encodedStudent = params.get('student');
         if (encodedStudent) {
@@ -101,19 +178,29 @@ export default function App() {
         }
       }
 
-      // 2. Load standard settings
-      const savedName = localStorage.getItem('ibn_sinai_student_name');
-      if (savedName && params.get('portal') !== 'true') setStudentName(savedName);
-      const savedGrade = localStorage.getItem('ibn_sinai_student_grade');
-      if (savedGrade && params.get('portal') !== 'true') setStudentGrade(savedGrade);
-      const savedClass = localStorage.getItem('ibn_sinai_student_class');
-      if (savedClass && params.get('portal') !== 'true') setStudentClass(savedClass);
-      const savedPage = localStorage.getItem('ibn_sinai_last_page');
-      if (savedPage) {
-        const num = Number(savedPage);
-        if (num >= 1 && num <= 121) setCurrentPageNum(num);
+      // 4. Load standard fallback settings from localStorage if not provided in URL
+      if (!queryStudent && params.get('portal') !== 'true') {
+        const savedName = localStorage.getItem('ibn_sinai_student_name');
+        if (savedName) setStudentName(savedName);
       }
-    } catch (e) {}
+      if (!queryGrade && params.get('portal') !== 'true') {
+        const savedGrade = localStorage.getItem('ibn_sinai_student_grade');
+        if (savedGrade) setStudentGrade(savedGrade);
+      }
+      if (!queryCls && params.get('portal') !== 'true') {
+        const savedClass = localStorage.getItem('ibn_sinai_student_class');
+        if (savedClass) setStudentClass(savedClass);
+      }
+      if (!queryPage) {
+        const savedPage = localStorage.getItem('ibn_sinai_last_page');
+        if (savedPage) {
+          const num = Number(savedPage);
+          if (num >= 1 && num <= 121) setCurrentPageNum(num);
+        }
+      }
+    } catch (e) {
+      console.error('Initialization error:', e);
+    }
   }, []);
 
   const handleSavePages = (updatedPages: BookPage[]) => {
@@ -236,10 +323,15 @@ export default function App() {
         onOpenSearch={() => setIsSearchOpen(true)}
         onOpenPrintCenter={handleOpenPrintCenter}
         onOpenLogoModal={() => setIsLogoModalOpen(true)}
+        onOpenAndroidModal={() => setIsAndroidModalOpen(true)}
         studentName={studentName}
         setStudentName={handleSetStudentName}
         masteryPercentage={masteryPercentage}
         branding={branding}
+        isStudentMode={isStudentMode}
+        setIsStudentMode={setIsStudentMode}
+        studentGrade={studentGrade}
+        studentClass={studentClass}
       />
 
       {/* Quick Audio Persona & Phonetic Controller */}
@@ -248,6 +340,24 @@ export default function App() {
       {/* 2. Main Interactive Screen Content */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 no-print">
         
+        {/* VIEW 0: STUDENT TRAINING HUB & ROADMAP */}
+        {activeTab === 'student_hub' && (
+          <StudentHub
+            skills={skills}
+            studentName={studentName}
+            setStudentName={handleSetStudentName}
+            studentGrade={studentGrade}
+            setStudentGrade={handleSetStudentGrade}
+            studentClass={studentClass}
+            setStudentClass={setStudentClass}
+            branding={branding}
+            onNavigateToPage={handleSelectPage}
+            onNavigateToTab={(t) => setActiveTab(t)}
+            onOpenAndroidModal={() => setIsAndroidModalOpen(true)}
+            pages={pages}
+          />
+        )}
+
         {/* VIEW 1: BOOK PAGES */}
         {activeTab === 'pages' && (
           <PageRenderer
@@ -402,6 +512,10 @@ export default function App() {
           branding={branding}
           onSaveBranding={handleUpdateBranding}
           onClose={() => setIsLogoModalOpen(false)}
+          onOpenAndroidModal={() => {
+            setIsLogoModalOpen(false);
+            setIsAndroidModalOpen(true);
+          }}
           onUpdateStudentInfo={(name, grade, cls) => {
             handleSetStudentName(name);
             handleSetStudentGrade(grade);
@@ -412,6 +526,16 @@ export default function App() {
           }}
         />
       )}
+
+      {/* 5.1 Dedicated Android PWA Install & QR Code Modal */}
+      <AndroidInstallModal
+        isOpen={isAndroidModalOpen}
+        onClose={() => setIsAndroidModalOpen(false)}
+        branding={branding}
+        studentName={studentName}
+        studentGrade={studentGrade}
+        studentClass={studentClass}
+      />
 
       {/* 6. Curriculum Print Center Modal */}
       {isPrintCenterOpen && (

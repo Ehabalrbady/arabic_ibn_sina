@@ -284,32 +284,34 @@ export const PAGES_PART_1: BookPage[] = [
       ]
     }
   },
-  // Page 19: Decomposition Activities
+  // Page 19: Letter Analysis & Synthesis
   {
     pageNumber: 19,
     unitId: 'three_letter_words',
     unitTitle: 'قراءة كلمات',
-    title: 'أنشطة وتدريبات تركيب الكلمات المفتوحة',
+    title: 'تدريب لتحليل الحروف والتركيب (الكلمات المفتوحة)',
     pageType: 'connect_and_read',
-    procedure: 'يقوم الطالب بقراءة الكلمات ثم الإعادة على الحروف والكلمات بقلم الرصاص ثم كتابتها.',
+    procedure: 'يقوم الطالب بقراءة الحروف المنفصلة ثم وصلها وقراءة الكلمة كاملة وكتابتها.',
     skillId: 8,
     content: {
       connectExercises: [
         { separated: 'قَ + رَ + أَ', combined: 'قَرَأَ' },
         { separated: 'كَ + تَ + بَ', combined: 'كَتَبَ' },
         { separated: 'حَ + رَ + ثَ', combined: 'حَرَثَ' },
-        { separated: 'نَ + شَ + رَ', combined: 'نَشَرَ' }
+        { separated: 'نَ + شَ + رَ', combined: 'نَشَرَ' },
+        { separated: 'زَ + رَ + عَ', combined: 'زَرَعَ' },
+        { separated: 'غَ + رَ + سَ', combined: 'غَرَسَ' }
       ]
     }
   },
-  // Page 20: Syllable Analysis
+  // Page 20: Syllable Analysis with Full Word Line
   {
     pageNumber: 20,
     unitId: 'three_letter_words',
     unitTitle: 'قراءة كلمات',
-    title: 'تدريب كتابي: تحليل الكلمات إلى مقاطع',
+    title: 'تدريب كتابي: تحليل الكلمات إلى مقاطع مع كتابة الكلمة كاملة',
     pageType: 'analysis_syllables',
-    procedure: 'يقوم الطالب بتحليل الكلمات إلى مقاطع صوتية.',
+    procedure: 'يقوم الطالب بتحليل الكلمات إلى مقاطع صوتية ثم كتابة الكلمة كاملة على السطر المخصص.',
     skillId: 8,
     content: {
       analysisWords: [

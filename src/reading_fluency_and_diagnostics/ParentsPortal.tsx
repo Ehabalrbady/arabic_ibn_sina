@@ -15,11 +15,17 @@ import {
   PhoneCall, 
   BookOpen,
   User,
-  Share2
+  Share2,
+  Volume2,
+  VolumeX,
+  Play,
+  Square,
+  Headphones
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { SchoolBranding } from '../institutional_branding/schoolBranding';
+import { SchoolBranding, encodeBrandingToUrl } from '../institutional_branding/schoolBranding';
 import { EvaluationSkill } from '../curriculum/types';
+import { playArabicAudio, stopAudio, unlockAllAudioContexts, VoicePersona } from '../speech_and_multimedia/audio';
 
 interface ParentsPortalProps {
   skills: EvaluationSkill[];
@@ -41,12 +47,16 @@ export const ParentsPortal: React.FC<ParentsPortalProps> = ({
   const [passcode, setPasscode] = useState('');
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [unlockedError, setUnlockedError] = useState(false);
+  const [playingText, setPlayingText] = useState<string | null>(null);
+  const [selectedPersona, setSelectedPersona] = useState<VoicePersona>('teacher');
+  const [customAudioInput, setCustomAudioInput] = useState('');
 
   // Accordion active sections
   const [openAccordions, setOpenAccordions] = useState({
     reading: true,
     writing: false,
-    phonology: false
+    phonology: false,
+    audioLab: true
   });
 
   // Home Checklist states
@@ -85,11 +95,32 @@ export const ParentsPortal: React.FC<ParentsPortalProps> = ({
     } catch (e) {}
   }, [parentNote, studentName]);
 
-  const toggleAccordion = (sec: 'reading' | 'writing' | 'phonology') => {
+  const toggleAccordion = (sec: 'reading' | 'writing' | 'phonology' | 'audioLab') => {
     setOpenAccordions(prev => ({
       ...prev,
       [sec]: !prev[sec]
     }));
+  };
+
+  const handlePlayAudio = async (textToPlay: string) => {
+    unlockAllAudioContexts();
+    if (playingText === textToPlay) {
+      stopAudio();
+      setPlayingText(null);
+      return;
+    }
+
+    setPlayingText(textToPlay);
+    try {
+      await playArabicAudio(textToPlay, {
+        persona: selectedPersona,
+        onEnd: () => setPlayingText(null)
+      });
+    } catch (e) {
+      console.warn("Audio playback error:", e);
+    } finally {
+      setPlayingText(null);
+    }
   };
 
   const handleChecklistChange = (idx: number) => {
@@ -109,6 +140,7 @@ export const ParentsPortal: React.FC<ParentsPortalProps> = ({
 
   const handleUnlock = (e: React.FormEvent) => {
     e.preventDefault();
+    unlockAllAudioContexts();
     // Default passcode is 1234 or the student's actual set pin (fallback to 1234)
     const savedPin = localStorage.getItem('ibn_sinai_student_pin') || '1234';
     
@@ -188,10 +220,11 @@ export const ParentsPortal: React.FC<ParentsPortalProps> = ({
       mastery: masteryPercentage
     };
     const serialized = btoa(unescape(encodeURIComponent(JSON.stringify(studentState))));
-    const shareUrl = `${window.location.origin}${window.location.pathname}?portal=true&student=${serialized}`;
+    const brandingPayload = encodeBrandingToUrl(branding);
+    const shareUrl = `${window.location.origin}${window.location.pathname}?portal=true&student=${serialized}${brandingPayload ? `&sb=${brandingPayload}` : ''}`;
     
     navigator.clipboard.writeText(shareUrl);
-    alert('تم نسخ رابط التقرير الذكي الخاص بولي الأمر! يمكنك الآن إرساله مباشرة لولي الأمر عبر الواتساب.');
+    alert('تم نسخ رابط التقرير الذكي الخاص بولي الأمر متضمناً شعار وبيانات المدرسة! يمكنك الآن إرساله مباشرة لولي الأمر عبر الواتساب.');
   };
 
   if (!isUnlocked) {
@@ -347,7 +380,20 @@ export const ParentsPortal: React.FC<ParentsPortalProps> = ({
               {readingSkills.length > 0 ? (
                 readingSkills.map(skill => (
                   <div key={skill.id} className="py-2.5 flex items-center justify-between text-xs sm:text-sm">
-                    <span className="font-bold text-slate-700">{skill.name}</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handlePlayAudio(skill.name)}
+                        className={`p-1.5 rounded-lg border transition cursor-pointer ${
+                          playingText === skill.name 
+                            ? 'bg-amber-500 text-slate-950 border-amber-600 animate-pulse' 
+                            : 'bg-white text-slate-600 border-slate-200 hover:bg-amber-50 hover:text-amber-800'
+                        }`}
+                        title="استمع للنطق الصوتي الفصيح لهذه المهارة"
+                      >
+                        <Volume2 className="w-3.5 h-3.5" />
+                      </button>
+                      <span className="font-bold text-slate-700">{skill.name}</span>
+                    </div>
                     <div className="flex items-center gap-2">
                       <span className="text-[11px] text-slate-400 font-bold">مرجع صفحة {skill.pageRef}</span>
                       {isMastered(skill) ? (
@@ -389,7 +435,20 @@ export const ParentsPortal: React.FC<ParentsPortalProps> = ({
               {writingSkills.length > 0 ? (
                 writingSkills.map(skill => (
                   <div key={skill.id} className="py-2.5 flex items-center justify-between text-xs sm:text-sm">
-                    <span className="font-bold text-slate-700">{skill.name}</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handlePlayAudio(skill.name)}
+                        className={`p-1.5 rounded-lg border transition cursor-pointer ${
+                          playingText === skill.name 
+                            ? 'bg-amber-500 text-slate-950 border-amber-600 animate-pulse' 
+                            : 'bg-white text-slate-600 border-slate-200 hover:bg-purple-50 hover:text-purple-800'
+                        }`}
+                        title="استمع للنطق الصوتي الفصيح لهذه المهارة"
+                      >
+                        <Volume2 className="w-3.5 h-3.5" />
+                      </button>
+                      <span className="font-bold text-slate-700">{skill.name}</span>
+                    </div>
                     <div className="flex items-center gap-2">
                       <span className="text-[11px] text-slate-400 font-bold">مرجع صفحة {skill.pageRef}</span>
                       {isMastered(skill) ? (
@@ -431,7 +490,20 @@ export const ParentsPortal: React.FC<ParentsPortalProps> = ({
               {phonologySkills.length > 0 ? (
                 phonologySkills.map(skill => (
                   <div key={skill.id} className="py-2.5 flex items-center justify-between text-xs sm:text-sm">
-                    <span className="font-bold text-slate-700">{skill.name}</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handlePlayAudio(skill.name)}
+                        className={`p-1.5 rounded-lg border transition cursor-pointer ${
+                          playingText === skill.name 
+                            ? 'bg-amber-500 text-slate-950 border-amber-600 animate-pulse' 
+                            : 'bg-white text-slate-600 border-slate-200 hover:bg-amber-50 hover:text-amber-800'
+                        }`}
+                        title="استمع للنطق الصوتي الفصيح لهذه المهارة"
+                      >
+                        <Volume2 className="w-3.5 h-3.5" />
+                      </button>
+                      <span className="font-bold text-slate-700">{skill.name}</span>
+                    </div>
                     <div className="flex items-center gap-2">
                       <span className="text-[11px] text-slate-400 font-bold">مرجع صفحة {skill.pageRef}</span>
                       {isMastered(skill) ? (
@@ -451,6 +523,107 @@ export const ParentsPortal: React.FC<ParentsPortalProps> = ({
               ) : (
                 <p className="text-center py-4 text-xs text-slate-400 font-bold">لا توجد مهارات ظواهر لغوية مقترحة.</p>
               )}
+            </div>
+          )}
+        </div>
+
+        {/* Section D: Interactive Home Audio & Listening Lab */}
+        <div className="bg-white border border-amber-200 rounded-2xl overflow-hidden shadow-xs">
+          <button
+            onClick={() => toggleAccordion('audioLab')}
+            className="w-full p-4 flex items-center justify-between hover:bg-amber-50/30 transition border-b border-amber-100 bg-amber-50/40"
+          >
+            <div className="flex items-center gap-2">
+              <Headphones className="w-4 h-4 text-amber-700" />
+              <span className="font-extrabold text-amber-950 text-sm">مختبر النطق والاستماع الفصيح لولي الأمر</span>
+              <span className="bg-amber-200 text-amber-900 text-[10px] font-black px-2 py-0.5 rounded-full">نطق فوري للأجهزة الذكية</span>
+            </div>
+            {openAccordions.audioLab ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+          </button>
+
+          {openAccordions.audioLab && (
+            <div className="p-4 space-y-4 bg-white">
+              {/* Persona Selector */}
+              <div className="flex items-center justify-between gap-3 p-2 bg-slate-50 rounded-xl border border-slate-150">
+                <span className="text-xs font-bold text-slate-600">اختر صوت القارئ:</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setSelectedPersona('teacher')}
+                    className={`px-3 py-1 text-xs font-black rounded-lg transition cursor-pointer ${
+                      selectedPersona === 'teacher'
+                        ? 'bg-amber-500 text-slate-950 shadow-xs'
+                        : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                    }`}
+                  >
+                    👩‍🏫 صوت المعلمة الحنونة
+                  </button>
+                  <button
+                    onClick={() => setSelectedPersona('child')}
+                    className={`px-3 py-1 text-xs font-black rounded-lg transition cursor-pointer ${
+                      selectedPersona === 'child'
+                        ? 'bg-amber-500 text-slate-950 shadow-xs'
+                        : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                    }`}
+                  >
+                    👦 صوت البطل الصغير
+                  </button>
+                </div>
+              </div>
+
+              {/* Quick Pronunciation Word Bank for Home Practice */}
+              <div className="space-y-2">
+                <span className="text-xs font-black text-slate-700">اضغط على أي كلمة للاستماع لنطقها بالتشكيل:</span>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    'دَرَسَ', 'كَتَبَ', 'قَرَأَ', 'مَدْرَسَةٌ', 'كِتَابٌ', 'عُصْفُورٌ', 
+                    'الشَّمْسُ', 'الْقَمَرُ', 'طَالِبٌ نَشِيطٌ', 'أَنَا أُحِبُّ الْقِرَاءَةَ'
+                  ].map((word) => (
+                    <button
+                      key={word}
+                      onClick={() => handlePlayAudio(word)}
+                      className={`px-3 py-1.5 rounded-xl border text-xs sm:text-sm font-black transition flex items-center gap-1.5 cursor-pointer ${
+                        playingText === word 
+                          ? 'bg-amber-500 text-slate-950 border-amber-600 scale-105 shadow-xs' 
+                          : 'bg-slate-50 text-slate-800 border-slate-200 hover:border-amber-400 hover:bg-amber-50'
+                      }`}
+                    >
+                      <Volume2 className="w-3.5 h-3.5 text-amber-800" />
+                      <span>{word}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Custom Word Tester for Parents */}
+              <div className="pt-2 border-t border-slate-100 space-y-2">
+                <span className="text-xs font-bold text-slate-600">جرّب نطق أي كلمة أو جملة من الواجب المدرسي:</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={customAudioInput}
+                    onChange={(e) => setCustomAudioInput(e.target.value)}
+                    placeholder="اكتب كلمة أو جملة هنا مثل: سَافَرَ سَالِمٌ إِلَى الْحَدِيقَةِ..."
+                    className="flex-1 px-3 py-2 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-hidden focus:border-amber-400"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && customAudioInput.trim()) {
+                        handlePlayAudio(customAudioInput.trim());
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={() => {
+                      if (customAudioInput.trim()) {
+                        handlePlayAudio(customAudioInput.trim());
+                      }
+                    }}
+                    disabled={!customAudioInput.trim()}
+                    className="px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-slate-950 font-black rounded-xl text-xs sm:text-sm transition flex items-center gap-1.5 cursor-pointer shrink-0"
+                  >
+                    <Play className="w-3.5 h-3.5" />
+                    <span>انطق الكلمة</span>
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>

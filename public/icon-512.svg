@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#064e3b" />
+      <stop offset="50%" stop-color="#065f46" />
+      <stop offset="100%" stop-color="#047857" />
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="50%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- Rounded App Icon Background -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+  
+  <!-- Outer Gold Decorative Border -->
+  <rect x="24" y="24" width="464" height="464" rx="92" fill="none" stroke="url(#goldGrad)" stroke-width="6" stroke-opacity="0.6"/>
+
+  <!-- Islamic Star & Book Motif -->
+  <g filter="url(#shadow)">
+    <!-- Open Book Illustration -->
+    <path d="M256 360 C 210 325, 140 325, 80 340 L 80 170 C 140 155, 210 155, 256 190 C 302 155, 372 155, 432 170 L 432 340 C 372 325, 302 325, 256 360 Z" fill="#FAF8F5" stroke="#f59e0b" stroke-width="8" stroke-linejoin="round"/>
+    
+    <!-- Spine -->
+    <path d="M256 190 L 256 360" stroke="#047857" stroke-width="6" stroke-linecap="round"/>
+
+    <!-- Left Book Lines -->
+    <path d="M115 210 Q 170 200 220 220" stroke="#10b981" stroke-width="4" stroke-linecap="round" fill="none"/>
+    <path d="M115 245 Q 170 235 220 255" stroke="#10b981" stroke-width="4" stroke-linecap="round" fill="none"/>
+    <path d="M115 280 Q 170 270 220 290" stroke="#10b981" stroke-width="4" stroke-linecap="round" fill="none"/>
+
+    <!-- Right Book Lines -->
+    <path d="M292 220 Q 342 200 397 210" stroke="#10b981" stroke-width="4" stroke-linecap="round" fill="none"/>
+    <path d="M292 255 Q 342 235 397 245" stroke="#10b981" stroke-width="4" stroke-linecap="round" fill="none"/>
+    <path d="M292 290 Q 342 270 397 280" stroke="#10b981" stroke-width="4" stroke-linecap="round" fill="none"/>
+
+    <!-- Golden Feather Pen / Sparkle -->
+    <circle cx="256" cy="125" r="32" fill="url(#goldGrad)"/>
+    <path d="M256 95 L 263 118 L 286 125 L 263 132 L 256 155 L 249 132 L 226 125 L 249 118 Z" fill="#ffffff"/>
+  </g>
+
+  <!-- Arabic Typography -->
+  <text x="256" y="425" text-anchor="middle" font-family="'Cairo', 'Tajawal', sans-serif" font-size="34" font-weight="900" fill="#fef08a" letter-spacing="1">
+    مسار القراءة
+  </text>
+  <text x="256" y="460" text-anchor="middle" font-family="'Cairo', 'Tajawal', sans-serif" font-size="18" font-weight="700" fill="#a7f3d0">
+    الخطة العلاجية لمهارات القراءة
+  </text>
+</svg>

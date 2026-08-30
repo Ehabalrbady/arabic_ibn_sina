@@ -557,26 +557,12 @@ export function generatePrintDocumentHtml({
              page.pageType === 'madd_comparison') ? `
             <div class="words-reading-grid ${
               page.pageType === 'letter_random' ? 'grid-dense' : 
-              page.pageType === 'two_letters_reading' ? 'grid-medium' : 'grid-words'
+              page.pageType === 'two_letters_reading' ? 'grid-medium' : 
+              ((page.content?.gridItems && page.content.gridItems.length > 18) ? 'grid-medium' : 'grid-words')
             }">
               ${(page.content?.gridItems || []).map(word => `
-                <div class="word-card-v4">
-                  <div class="v4-tier v4-model-tier">
-                    <span class="v4-badge">النموذج</span>
-                    <span class="word-text font-amiri">${word}</span>
-                  </div>
-                  <div class="v4-tier v4-dotted-tier">
-                    <span class="v4-badge">١. تتبع</span>
-                    <span class="v4-dotted-text font-amiri arabic-dotted-tracing">${word}</span>
-                  </div>
-                  <div class="v4-tier v4-write-tier">
-                    <span class="v4-badge">٢. اكتب</span>
-                    ${renderHandwritingSlot(branding, 'compact')}
-                  </div>
-                  <div class="v4-tier v4-write-tier">
-                    <span class="v4-badge">٣/٤. كرر</span>
-                    ${renderHandwritingSlot(branding, 'compact')}
-                  </div>
+                <div class="word-card-clean">
+                  <span class="word-text-large font-amiri">${word}</span>
                 </div>
               `).join('')}
             </div>
@@ -592,51 +578,31 @@ export function generatePrintDocumentHtml({
             page.content?.gridItems ? `
             <div class="words-reading-grid grid-words">
               ${page.content.gridItems.map(word => `
-                <div class="word-card-v4">
-                  <div class="v4-tier v4-model-tier">
-                    <span class="v4-badge">النموذج</span>
-                    <span class="word-text font-amiri">${word}</span>
-                  </div>
-                  <div class="v4-tier v4-dotted-tier">
-                    <span class="v4-badge">١. تتبع</span>
-                    <span class="v4-dotted-text font-amiri arabic-dotted-tracing">${word}</span>
-                  </div>
-                  <div class="v4-tier v4-write-tier">
-                    <span class="v4-badge">٢. اكتب</span>
-                    ${renderHandwritingSlot(branding, 'compact')}
-                  </div>
-                  <div class="v4-tier v4-write-tier">
-                    <span class="v4-badge">٣/٤. كرر</span>
-                    ${renderHandwritingSlot(branding, 'compact')}
-                  </div>
+                <div class="word-card-clean">
+                  <span class="word-text-large font-amiri">${word}</span>
                 </div>
               `).join('')}
             </div>
           ` : ''}
 
           ${page.pageType === 'connect_and_read' ? `
-            <div class="section-title">صل الحروف المنفصلة ➜ تتبع الكلمة المنقطة ➜ اكتب الكلمة في المحاولات التالية:</div>
+            <div class="section-title">صل الحروف المنفصلة ➜ تتبع الكلمة المنقطة ➜ اكتب الكلمة متصلة على السطر:</div>
             <div class="v4-connect-grid">
               ${(page.content?.connectExercises || []).map(ex => `
                 <div class="v4-connect-card">
                   <!-- 1. Separated Letters Model -->
                   <div class="v4-tier v4-model-tier">
-                    <span class="v4-badge">المقاطع منفصلة (النموذج)</span>
+                    <span class="v4-badge">المقاطع منفصلة</span>
                     <span class="v4-sep-pill font-amiri">${ex.separated}</span>
                   </div>
                   <!-- 2. Dotted Combined Word -->
                   <div class="v4-tier v4-dotted-tier">
-                    <span class="v4-badge">١. تتبع الكلمة متصلة ✏️</span>
+                    <span class="v4-badge">١. تتبع متصل ✏️</span>
                     <span class="v4-dotted-text font-amiri arabic-dotted-tracing">${ex.combined}</span>
                   </div>
-                  <!-- 3. Attempt 2 -->
+                  <!-- 3. Handwriting -->
                   <div class="v4-tier v4-write-tier">
                     <span class="v4-badge">٢. اكتب الكلمة متصلة</span>
-                    ${renderHandwritingSlot(branding, 'compact')}
-                  </div>
-                  <!-- 4. Attempt 3/4 -->
-                  <div class="v4-tier v4-write-tier">
-                    <span class="v4-badge">٣/٤. كرر للإتقان ⭐</span>
                     ${renderHandwritingSlot(branding, 'compact')}
                   </div>
                 </div>
@@ -645,25 +611,20 @@ export function generatePrintDocumentHtml({
           ` : ''}
 
           ${page.pageType === 'analysis_syllables' ? `
-            <div class="section-title">حلل الكلمات إلى مقاطعها الصوتية (الكلمة ➜ المقاطع مفككة ➜ كتابة المقاطع):</div>
+            <div class="section-title">حلل الكلمات إلى مقاطعها الصوتية ثم اكتب الكلمة كاملة على السطر المخصص:</div>
             <div class="analysis-grid">
               ${(page.content?.analysisWords || []).map(item => `
                 <div class="analysis-card">
                   <div class="analysis-header">
                     <span class="analysis-word font-amiri">${item.word}</span>
                     <div class="syllables-wrap">
+                      <span class="syl-lbl">المقاطع:</span>
                       ${item.syllables.map(s => `<span class="syllable-tag font-amiri arabic-dotted-tracing">${s}</span>`).join('')}
                     </div>
                   </div>
                   <div class="analysis-write-row">
-                    <span>كتابة المقاطع:</span>
-                    <div class="analysis-slots-row">
-                      ${item.syllables.map(() => `
-                        <div class="syl-slot-box">
-                          ${renderHandwritingSlot(branding, 'compact')}
-                        </div>
-                      `).join('')}
-                    </div>
+                    <span class="full-word-lbl">كتابة الكلمة كاملة:</span>
+                    <div class="write-line"></div>
                   </div>
                 </div>
               `).join('')}
@@ -1055,16 +1016,35 @@ export function generatePrintDocumentHtml({
         /* Words Grids */
         .words-reading-grid {
           display: grid;
-          gap: 8px;
+          gap: 6px;
         }
         .grid-dense {
-          grid-template-columns: repeat(8, 1fr);
+          grid-template-columns: repeat(7, 1fr);
         }
         .grid-medium {
-          grid-template-columns: repeat(6, 1fr);
+          grid-template-columns: repeat(5, 1fr);
         }
         .grid-words {
           grid-template-columns: repeat(4, 1fr);
+        }
+        .word-card-clean {
+          border: 2px solid #0f172a;
+          border-radius: 8px;
+          padding: 6px 4px;
+          text-align: center;
+          background: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 48px;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        }
+        .word-text-large {
+          font-size: 26px;
+          font-weight: 900;
+          color: #020617;
+          line-height: 1.15;
+          display: block;
         }
         .word-card {
           border: 2px solid #0f172a;
@@ -2515,12 +2495,30 @@ function renderHeader(page: BookPage, branding: SchoolBranding): string {
   `;
 }
 
+function pageHasExercises(page: BookPage): boolean {
+  if (page.pageType === 'cover' || page.pageType === 'unit_cover' || page.pageType === 'toc' || page.pageType === 'intro' || page.pageType === 'conclusion' || page.pageNumber === 121) {
+    return false;
+  }
+  return !!(
+    (page.content?.gridItems && page.content.gridItems.length > 0) ||
+    (page.content?.connectExercises && page.content.connectExercises.length > 0) ||
+    (page.content?.analysisWords && page.content.analysisWords.length > 0) ||
+    (page.content?.sentences && page.content.sentences.length > 0) ||
+    (page.content?.sortingItems && page.content.sortingItems.length > 0) ||
+    (page.content?.pictureBlanks && page.content.pictureBlanks.length > 0) ||
+    (page.content?.colorItems && page.content.colorItems.length > 0) ||
+    (page.content?.dictationSuggestedWords && page.content.dictationSuggestedWords.length > 0) ||
+    page.pageType === 'dictation_board'
+  );
+}
+
 function renderFooter(page: BookPage, branding: SchoolBranding): string {
   const schoolName = branding.schoolName || 'مدارس ابن سيناء الأهلية';
+  const hasExercises = pageHasExercises(page);
 
   return `
     <footer class="page-footer">
-      ${branding.showEvaluationBoxInPrint !== false ? `
+      ${(hasExercises && branding.showEvaluationBoxInPrint !== false) ? `
         <div class="mastery-indicator-box">
           <div class="mastery-indicator-top">
             <div class="mastery-title-wrap">
@@ -2528,10 +2526,10 @@ function renderFooter(page: BookPage, branding: SchoolBranding): string {
               <strong class="mastery-title-text">مؤشرات إتقان التلميذ (نظام المحاولات الأربع):</strong>
             </div>
             <div class="mastery-attempts-row">
-              <span class="attempt-check-pill"><span class="check-sq">[ &nbsp; ]</span> المحاولة الأولى ⭐⭐⭐</span>
-              <span class="attempt-check-pill"><span class="check-sq">[ &nbsp; ]</span> المحاولة الثانية ⭐⭐</span>
-              <span class="attempt-check-pill"><span class="check-sq">[ &nbsp; ]</span> المحاولة الثالثة ⭐</span>
-              <span class="attempt-check-pill"><span class="check-sq">[ &nbsp; ]</span> المحاولة الرابعة (علاجي)</span>
+              <span class="attempt-check-pill"><span class="check-sq">[ &nbsp; ]</span> المحاولة الأولى (إتقان تام)</span>
+              <span class="attempt-check-pill"><span class="check-sq">[ &nbsp; ]</span> المحاولة الثانية (متقدم)</span>
+              <span class="attempt-check-pill"><span class="check-sq">[ &nbsp; ]</span> المحاولة الثالثة (مقبول)</span>
+              <span class="attempt-check-pill"><span class="check-sq">[ &nbsp; ]</span> المحاولة الرابعة (تدريب علاجي)</span>
             </div>
           </div>
 

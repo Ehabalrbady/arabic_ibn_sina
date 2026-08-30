@@ -1,0 +1,16 @@
+{
+  "packageId": "com.ibnsina.readingpath",
+  "host": "ais-pre-bgvnogbos6fm7ymiuagxnu-947407300469.europe-west2.run.app",
+  "name": "مسار تعلم الطالب - الخطة العلاجية لمهارات القراءة والكتابة",
+  "launcherName": "مسار القراءة",
+  "description": "تطبيق تعليمي تفاعلي شامل لمهارات القراءة والكتابة والتأسيس اللغوي مع نطق صوتي فصيح ودعم العلامة المدرسية",
+  "themeColor": "#065F46",
+  "navigationColor": "#064E3B",
+  "backgroundColor": "#FAF8F5",
+  "enableNotifications": true,
+  "startUrl": "/?mode=student&tab=student_hub",
+  "iconUrl": "https://ais-pre-bgvnogbos6fm7ymiuagxnu-947407300469.europe-west2.run.app/icon-512.svg",
+  "maskableIconUrl": "https://ais-pre-bgvnogbos6fm7ymiuagxnu-947407300469.europe-west2.run.app/icon-512.svg",
+  "appVersion": "1.0.0",
+  "generator": "bubblewrap"
+}
